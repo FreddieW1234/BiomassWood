@@ -10,6 +10,8 @@ export const BOILER_STATUSES = [
 export const FUEL_TYPES = [
   { value: 'pellet', label: 'Wood pellets' },
   { value: 'wood_chip', label: 'Wood chip' },
+  { value: 'pellet_chip', label: 'Pellet / wood chip' },
+  { value: 'roundwood', label: 'Roundwood timber' },
   { value: 'other', label: 'Other approved biomass' },
 ]
 

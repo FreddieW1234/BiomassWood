@@ -18,7 +18,9 @@ import { MaintenanceTasks } from './pages/MaintenanceTasks'
 import { MaintenanceTemplates } from './pages/MaintenanceTemplates'
 import { MeterReadings } from './pages/MeterReadings'
 import { Meters } from './pages/Meters'
+import { RhiUsagePage } from './pages/RhiUsage'
 import { Sites } from './pages/Sites'
+import { Solar } from './pages/Solar'
 
 export default function App() {
   return (
@@ -33,7 +35,9 @@ export default function App() {
             <Route path="/cleaning" element={<Cleaning />} />
             <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/meter-readings" element={<MeterReadings />} />
+            <Route path="/rhi-usage" element={<RhiUsagePage />} />
             <Route path="/earnings" element={<Earnings />} />
+            <Route path="/solar" element={<Solar />} />
             <Route path="/fuel-suppliers" element={<FuelSuppliers />} />
             <Route path="/fuel-batches" element={<FuelBatches />} />
             <Route path="/fuel-deliveries" element={<FuelDeliveries />} />

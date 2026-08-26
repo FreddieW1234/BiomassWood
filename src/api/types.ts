@@ -61,9 +61,50 @@ export type Boiler = Timestamps & {
   status: string
   heat_uses: string
   operator: string
+  rhi_number: string
+  serial_number_2: string
+  opening_reading: number
   sold_on: string
   sold_to: string
   final_reading: number
+  decommissioned_on: string
+  final_reading_on: string
+  final_reading_submitted_on: string
+  sale_agent: string
+  ofgem_notified: string
+  reaccredited: string
+  new_rhi_number: string
+}
+
+export type RhiYear = Timestamps & {
+  boiler_id: number
+  year_index: number
+  tier1_kwh: number
+  notes: string
+}
+
+export type RhiUsage = Timestamps & {
+  boiler_id: number
+  year_index: number
+  quarter: number
+  kwh: number
+  notes: string
+}
+
+export type SolarReading = Timestamps & {
+  date: string
+  reading: number
+  notes: string
+}
+
+export type SolarSubmission = Timestamps & {
+  date: string
+  submission_no: string
+  reading: number
+  units: number
+  price_per_unit: number
+  total: number
+  notes: string
 }
 
 export type Meter = Timestamps & {

@@ -21,7 +21,11 @@ import type {
   MaintenanceTemplate,
   Meter,
   MeterReading,
+  RhiUsage,
+  RhiYear,
   Site,
+  SolarReading,
+  SolarSubmission,
 } from './types'
 
 export class ApiError extends Error {
@@ -144,6 +148,10 @@ export const maintenanceTasksApi = resource<MaintenanceTask>('/api/maintenance-t
 export const defectsApi = resource<Defect>('/api/defects')
 export const hsInspectionsApi = resource<HsInspection>('/api/hs-inspections')
 export const documentsApi = resource<DocumentEntry>('/api/documents')
+export const rhiYearsApi = resource<RhiYear>('/api/rhi-years')
+export const rhiUsageApi = resource<RhiUsage>('/api/rhi-usage')
+export const solarReadingsApi = resource<SolarReading>('/api/solar-readings')
+export const solarSubmissionsApi = resource<SolarSubmission>('/api/solar-submissions')
 
 export function listResource(slug: string) {
   return request<ListResponse<Record<string, unknown>>>(`/api/${slug}`)

@@ -35,7 +35,9 @@ export function Layout() {
           <NavLink to="/cleaning">Cleaning</NavLink>
           <NavLink to="/maintenance">Maintenance</NavLink>
           <NavLink to="/meter-readings">Meter readings</NavLink>
+          <NavLink to="/rhi-usage">RHI usage</NavLink>
           <NavLink to="/earnings">Earnings</NavLink>
+          <NavLink to="/solar">Solar</NavLink>
           <p className="nav-label">Fuel</p>
           <NavLink to="/fuel-suppliers">Suppliers</NavLink>
           <NavLink to="/fuel-batches">Batches</NavLink>
