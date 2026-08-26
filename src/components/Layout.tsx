@@ -53,7 +53,6 @@ export function Layout() {
           <p className="nav-label">Setup</p>
           <NavLink to="/sites">Sites</NavLink>
           <NavLink to="/boilers">Boilers</NavLink>
-          <NavLink to="/meters">Meters</NavLink>
         </nav>
 
         <div className="sidebar-foot">

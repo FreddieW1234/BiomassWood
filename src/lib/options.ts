@@ -46,7 +46,6 @@ export const MANUFACTURERS = ['FACI', 'Moretti Camini', 'Ala-Talkkari Veto']
 export const DOCUMENT_RESOURCES = [
   { value: 'boilers', label: 'Boiler' },
   { value: 'sites', label: 'Site' },
-  { value: 'meters', label: 'Meter' },
   { value: 'fuel-stores', label: 'Fuel store' },
   { value: 'fuel-suppliers', label: 'Fuel supplier' },
   { value: 'fuel-batches', label: 'Fuel batch' },
@@ -73,4 +72,16 @@ export const ALERT_LINKS: Record<string, string> = {
 
 export function selectOptions(values: string[]) {
   return values.map((value) => ({ value, label: value.replaceAll('_', ' ') }))
+}
+
+export function statusLabel(value: string) {
+  if (!value) return 'Active'
+  const text = value.replaceAll('_', ' ').toLowerCase()
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+export function fuelLabel(value: string) {
+  if (!value) return '—'
+  const match = FUEL_TYPES.find((option) => option.value === value)
+  return match ? match.label : value.replaceAll('_', ' ')
 }

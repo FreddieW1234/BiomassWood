@@ -9,7 +9,6 @@ export type HealthResponse = {
   meterReadingCount: number
   earningCount: number
   siteCount?: number
-  meterCount?: number
   fuelStoreCount?: number
   fuelSupplierCount?: number
   fuelBatchCount?: number
@@ -20,6 +19,10 @@ export type HealthResponse = {
   defectCount?: number
   hsInspectionCount?: number
   documentCount?: number
+  'rhi-yearsCount'?: number
+  'rhi-usageCount'?: number
+  'solar-readingsCount'?: number
+  'solar-submissionsCount'?: number
 }
 
 export type AlertItem = {
@@ -63,6 +66,9 @@ export type Boiler = Timestamps & {
   operator: string
   rhi_number: string
   serial_number_2: string
+  meter_serial: string
+  meter_changed_on: string
+  commissioned_on: string
   opening_reading: number
   sold_on: string
   sold_to: string
@@ -104,17 +110,6 @@ export type SolarSubmission = Timestamps & {
   units: number
   price_per_unit: number
   total: number
-  notes: string
-}
-
-export type Meter = Timestamps & {
-  boiler_id: number
-  serial_number: string
-  meter_type: string
-  location: string
-  commissioned_on: string
-  commissioning_reading: number
-  replaced_on: string
   notes: string
 }
 
@@ -215,7 +210,6 @@ export type MeterReading = Timestamps & {
   reading: number
   staff: string
   notes: string
-  meter_id: number | null
   reading_at: string
 }
 

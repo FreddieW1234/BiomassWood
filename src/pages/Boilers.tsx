@@ -3,7 +3,7 @@ import type { Boiler } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { idValue } from '../lib/format'
-import { BOILER_STATUSES, FUEL_TYPES, MANUFACTURERS, selectOptions } from '../lib/options'
+import { BOILER_STATUSES, FUEL_TYPES, MANUFACTURERS, fuelLabel, statusLabel } from '../lib/options'
 
 const empty = () => ({
   number: '',
@@ -26,6 +26,9 @@ const empty = () => ({
   operator: '',
   rhi_number: '',
   serial_number_2: '',
+  meter_serial: '',
+  meter_changed_on: '',
+  commissioned_on: '',
   opening_reading: '',
   sold_on: '',
   sold_to: '',
@@ -70,6 +73,9 @@ export function Boilers() {
         operator: b.operator,
         rhi_number: b.rhi_number,
         serial_number_2: b.serial_number_2,
+        meter_serial: b.meter_serial,
+        meter_changed_on: b.meter_changed_on,
+        commissioned_on: b.commissioned_on,
         opening_reading: b.opening_reading ? String(b.opening_reading) : '',
         sold_on: b.sold_on,
         sold_to: b.sold_to,
@@ -118,17 +124,20 @@ export function Boilers() {
           name: 'status',
           label: 'Status',
           kind: 'select',
-          options: selectOptions(BOILER_STATUSES),
+          options: BOILER_STATUSES.map((value) => ({ value, label: statusLabel(value) })),
           required: true,
           width: 'half',
         },
         { name: 'installed_on', label: 'Installed', kind: 'date', width: 'half' },
+        { name: 'commissioned_on', label: 'Commissioned', kind: 'date', width: 'half' },
         { name: 'accredited_on', label: 'Accredited / registered', kind: 'date', width: 'half' },
         { name: 'scheme', label: 'Scheme / compliance route', placeholder: 'e.g. RHI', width: 'half' },
         { name: 'operator', label: 'Responsible operator', width: 'half' },
         { name: 'emissions_certificate', label: 'Emissions certificate' },
         { name: 'permitted_fuels', label: 'Permitted fuels' },
         { name: 'heat_uses', label: 'Heat uses', placeholder: 'Space heating, DHW, process, drying…' },
+        { name: 'meter_serial', label: 'Meter number', width: 'half' },
+        { name: 'meter_changed_on', label: 'Meter changed', kind: 'date', width: 'half' },
         { name: 'opening_reading', label: 'Opening meter reading', kind: 'number' },
         { name: 'sold_on', label: 'Sold / transferred', kind: 'date', width: 'half' },
         { name: 'sold_to', label: 'Buyer / transfer ref', width: 'half' },
@@ -154,9 +163,15 @@ export function Boilers() {
         },
         { header: 'Type', cell: (item) => item.type },
         { header: 'RHI', className: 'nowrap', cell: (item) => item.rhi_number || '—' },
-        { header: 'Status', className: 'nowrap', cell: (item) => item.status || 'ACTIVE' },
-        { header: 'Fuel', className: 'nowrap', cell: (item) => item.fuel_type || '—' },
-        { header: 'Serial', className: 'nowrap', cell: (item) => item.serial_number || '—' },
+        { header: 'Status', className: 'nowrap', cell: (item) => statusLabel(item.status) },
+        { header: 'Fuel', className: 'nowrap', cell: (item) => fuelLabel(item.fuel_type) },
+        {
+          header: 'Serial',
+          className: 'nowrap',
+          cell: (item) =>
+            [item.serial_number, item.serial_number_2].filter(Boolean).join(' / ') || '—',
+        },
+        { header: 'Meter', className: 'nowrap', cell: (item) => item.meter_serial || '—' },
         { header: 'Location', cell: (item) => item.location || '—' },
       ]}
     />

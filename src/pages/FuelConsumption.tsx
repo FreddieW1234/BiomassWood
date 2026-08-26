@@ -3,6 +3,7 @@ import type { FuelConsumption } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { boilerLabel, figure, idValue, showDate, today } from '../lib/format'
+import { fuelLabel } from '../lib/options'
 
 const empty = () => ({
   boiler_id: '',
@@ -52,7 +53,7 @@ export function FuelConsumptionPage() {
           kind: 'select',
           options: batches.map((batch) => ({
             value: String(batch.id),
-            label: `Batch #${batch.id} · ${batch.fuel_type}`,
+            label: `Batch #${batch.id} · ${fuelLabel(batch.fuel_type)}`,
           })),
           emptyLabel: 'Not set',
           width: 'half',

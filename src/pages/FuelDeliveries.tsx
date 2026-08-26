@@ -3,10 +3,11 @@ import type { FuelDelivery } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { boilerLabel, figure, idValue, showDate, today } from '../lib/format'
+import { fuelLabel } from '../lib/options'
 
 function batchLabel(id: number, batches: { id: number; fuel_type: string }[]) {
   const batch = batches.find((item) => item.id === id)
-  return batch ? `Batch #${id} · ${batch.fuel_type}` : `Batch #${id}`
+  return batch ? `Batch #${id} · ${fuelLabel(batch.fuel_type)}` : `Batch #${id}`
 }
 
 const empty = () => ({

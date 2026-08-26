@@ -4,7 +4,7 @@ import type { FuelBatch } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { figure, idValue, showDate } from '../lib/format'
-import { FUEL_TYPES, SUPPLY_ROUTES } from '../lib/options'
+import { FUEL_TYPES, SUPPLY_ROUTES, fuelLabel } from '../lib/options'
 
 const empty = () => ({
   supplier_id: '',
@@ -113,7 +113,7 @@ export function FuelBatches() {
       ]}
       columns={[
         { header: 'ID', className: 'nowrap', cell: (item) => `#${item.id}` },
-        { header: 'Fuel', className: 'nowrap', cell: (item) => item.fuel_type },
+        { header: 'Fuel', className: 'nowrap', cell: (item) => fuelLabel(item.fuel_type) },
         {
           header: 'Supplier',
           cell: (item) => (item.supplier_id ? byId.get(item.supplier_id)?.name || `#${item.supplier_id}` : '—'),

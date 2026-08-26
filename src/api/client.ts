@@ -19,7 +19,6 @@ import type {
   MaintenanceEntry,
   MaintenanceTask,
   MaintenanceTemplate,
-  Meter,
   MeterReading,
   RhiUsage,
   RhiYear,
@@ -133,7 +132,6 @@ function resource<TItem>(base: string): Resource<TItem> {
 
 export const sitesApi = resource<Site>('/api/sites')
 export const boilersApi = resource<Boiler>('/api/boilers')
-export const metersApi = resource<Meter>('/api/meters')
 export const fuelStoresApi = resource<FuelStore>('/api/fuel-stores')
 export const fuelSuppliersApi = resource<FuelSupplier>('/api/fuel-suppliers')
 export const fuelBatchesApi = resource<FuelBatch>('/api/fuel-batches')
