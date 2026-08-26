@@ -68,7 +68,10 @@ export function MeterReadings() {
       <div className="page-head with-action">
         <div>
           <h1>Meter readings</h1>
-          <p>Heat meter readings per boiler. The "used" column shows the change since that boiler's previous reading.</p>
+          <p>
+            Heat meter readings per boiler. Change/used is the difference from that boiler's
+            previous reading — negative where a meter was replaced.
+          </p>
         </div>
         {!formOpen && (
           <button type="button" className="button" onClick={() => setFormOpen(true)}>
@@ -173,8 +176,7 @@ export function MeterReadings() {
                     <th>Date</th>
                     <th>Boiler</th>
                     <th className="num">Reading</th>
-                    <th className="num">Used</th>
-                    <th>By</th>
+                    <th className="num">Change/used</th>
                     <th>Notes</th>
                     <th />
                   </tr>
@@ -188,7 +190,6 @@ export function MeterReadings() {
                         <td className="nowrap">{boilerLabel(byId.get(reading.boiler_id))}</td>
                         <td className="num">{figure(reading.reading)}</td>
                         <td className="num">{delta === undefined ? '—' : figure(delta)}</td>
-                        <td>{reading.staff || '—'}</td>
                         <td className="wrap">{reading.notes || '—'}</td>
                         <td className="actions">
                           <button
