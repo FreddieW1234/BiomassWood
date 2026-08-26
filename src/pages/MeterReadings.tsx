@@ -1,4 +1,4 @@
-import { useMemo, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { meterReadingsApi } from '../api/client'
 import type { MeterReading } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
@@ -50,22 +50,42 @@ export function MeterReadings() {
     return map
   }, [ledger.items])
 
-  function onSubmit(event: FormEvent) {
+  const [formOpen, setFormOpen] = useState(false)
+
+  async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    void ledger.submit()
+    const saved = await ledger.submit()
+    if (saved) setFormOpen(false)
+  }
+
+  function close() {
+    ledger.cancel()
+    setFormOpen(false)
   }
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <h1>Meter readings</h1>
-        <p>Heat meter readings per boiler. The "used" column shows the change since that boiler's previous reading.</p>
+    <div className="page wide">
+      <div className="page-head with-action">
+        <div>
+          <h1>Meter readings</h1>
+          <p>Heat meter readings per boiler. The "used" column shows the change since that boiler's previous reading.</p>
+        </div>
+        {!formOpen && (
+          <button type="button" className="button" onClick={() => setFormOpen(true)}>
+            New reading
+          </button>
+        )}
       </div>
 
-      <div className="split">
-        <form className="card form-card" onSubmit={onSubmit}>
-          <h2>{ledger.editingId ? `Edit reading #${ledger.editingId}` : 'New reading'}</h2>
-          <div className="field-row">
+      {formOpen && (
+        <form className="card form-panel" onSubmit={(event) => void onSubmit(event)}>
+          <div className="card-head">
+            <h2>{ledger.editingId ? 'Edit reading' : 'New reading'}</h2>
+            <button type="button" className="text-button" onClick={close}>
+              Close
+            </button>
+          </div>
+          <div className="form-grid">
             <label>
               Date
               <input
@@ -83,8 +103,7 @@ export function MeterReadings() {
                 placeholder="Optional"
               />
             </label>
-          </div>
-          <label>
+            <label>
             Boiler
             <BoilerSelect
               boilers={boilers}
@@ -113,7 +132,7 @@ export function MeterReadings() {
               required
             />
           </label>
-          <label>
+          <label className="field-wide">
             Notes
             <textarea
               value={ledger.form.notes}
@@ -121,21 +140,21 @@ export function MeterReadings() {
               rows={2}
             />
           </label>
+          </div>
           <div className="row">
             <button type="submit" className="button" disabled={ledger.saving}>
               {ledger.editingId ? 'Save changes' : 'Add reading'}
             </button>
-            {ledger.editingId && (
-              <button type="button" className="button ghost" onClick={ledger.cancel}>
-                Cancel
-              </button>
-            )}
+            <button type="button" className="button ghost" onClick={close}>
+              Cancel
+            </button>
           </div>
           {ledger.error && <p className="err">{ledger.error}</p>}
           {boilers.length === 0 && (
             <p className="hint">No boilers registered yet — add them on the Boilers page first.</p>
           )}
         </form>
+      )}
 
         <section className="card">
           <div className="card-head">
@@ -175,7 +194,10 @@ export function MeterReadings() {
                           <button
                             type="button"
                             className="text-button"
-                            onClick={() => ledger.edit(reading)}
+                            onClick={() => {
+                              ledger.edit(reading)
+                              setFormOpen(true)
+                            }}
                           >
                             Edit
                           </button>
@@ -195,7 +217,6 @@ export function MeterReadings() {
             </div>
           )}
         </section>
-      </div>
     </div>
   )
 }

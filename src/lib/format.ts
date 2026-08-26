@@ -30,6 +30,25 @@ export function boilerLabel(boiler: Boiler | undefined | null) {
   return `No. ${boiler.number} · ${boiler.type}`
 }
 
+// Boiler numbers are text and have gaps. Sort them as numbers, with No. 33
+// (the boiler relocated from Fforestfach) sitting next to No. 3 where it
+// physically belongs. Anything non-numeric sorts last.
+export function boilerSortKey(number: string) {
+  if (number === '33') return 3.5
+  const parsed = Number.parseInt(number, 10)
+  return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed
+}
+
+export function compareBoilers(a: Boiler, b: Boiler) {
+  const diff = boilerSortKey(a.number) - boilerSortKey(b.number)
+  if (diff !== 0 && Number.isFinite(diff)) return diff
+  return a.number.localeCompare(b.number, 'en', { numeric: true })
+}
+
+export function sortBoilers(boilers: Boiler[]) {
+  return [...boilers].sort(compareBoilers)
+}
+
 export function boilerMap(boilers: Boiler[]) {
   const map = new Map<number, Boiler>()
   for (const boiler of boilers) map.set(boiler.id, boiler)

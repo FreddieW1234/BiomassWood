@@ -16,6 +16,7 @@ export function RhiUsagePage() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
+  const [formOpen, setFormOpen] = useState(false)
   const [form, setForm] = useState({ year_index: '', quarter: '1', kwh: '', notes: '' })
   const [tierForm, setTierForm] = useState({ year_index: '', tier1_kwh: '' })
 
@@ -129,27 +130,37 @@ export function RhiUsagePage() {
   }
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <h1>RHI usage</h1>
-        <p>
-          Quarterly kWh per boiler per RHI year, with the tier-1 threshold and what is outstanding
-          against it. Click a quarter cell to load it into the form for editing.
-        </p>
+    <div className="page wide">
+      <div className="page-head with-action">
+        <div>
+          <h1>RHI usage</h1>
+          <p>
+            Quarterly kWh per boiler per RHI year, with the tier-1 threshold and what is outstanding
+            against it. Click a quarter figure to load it into the form for editing.
+          </p>
+        </div>
+        <div className="head-actions">
+          <label className="toolbar-toggle">
+            Boiler
+            <BoilerSelect boilers={boilers} value={boilerId} onChange={setBoilerId} required />
+          </label>
+          {selectedId && !formOpen && (
+            <button type="button" className="button" onClick={() => setFormOpen(true)}>
+              Add figures
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="card form-card" style={{ marginBottom: '1rem' }}>
-        <label>
-          Boiler
-          <BoilerSelect boilers={boilers} value={boilerId} onChange={setBoilerId} required />
-        </label>
-      </div>
-
-      {selectedId && (
-        <div className="split">
-          <div>
-            <form className="card form-card" onSubmit={submitUsage}>
-              <h2>Quarterly usage</h2>
+      {selectedId && formOpen && (
+        <div className="split even">
+            <form className="card form-panel" onSubmit={submitUsage}>
+              <div className="card-head">
+                <h2>Quarterly usage</h2>
+                <button type="button" className="text-button" onClick={() => setFormOpen(false)}>
+                  Close
+                </button>
+              </div>
               <div className="field-row">
                 <label>
                   RHI year
@@ -207,8 +218,10 @@ export function RhiUsagePage() {
               </p>
             </form>
 
-            <form className="card form-card" style={{ marginTop: '1rem' }} onSubmit={submitTier}>
-              <h2>Tier-1 threshold</h2>
+            <form className="card form-panel" onSubmit={submitTier}>
+              <div className="card-head">
+                <h2>Tier-1 threshold</h2>
+              </div>
               <div className="field-row">
                 <label>
                   RHI year
@@ -239,8 +252,10 @@ export function RhiUsagePage() {
                 </button>
               </div>
             </form>
-          </div>
+        </div>
+      )}
 
+      {selectedId && (
           <section className="card">
             <div className="card-head">
               <h2>
@@ -276,7 +291,10 @@ export function RhiUsagePage() {
                             <button
                               type="button"
                               className="text-button"
-                              onClick={() => pickCell(row.yearIndex, index + 1, cell)}
+                              onClick={() => {
+                                pickCell(row.yearIndex, index + 1, cell)
+                                setFormOpen(true)
+                              }}
                               title="Load into the form"
                             >
                               {cell ? figure(cell.kwh) : '—'}
@@ -295,7 +313,6 @@ export function RhiUsagePage() {
               </div>
             )}
           </section>
-        </div>
       )}
 
       {!selectedId && <p className="muted">Choose a boiler to see its usage history.</p>}

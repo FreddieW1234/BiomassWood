@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { boilersApi } from '../api/client'
 import type { Boiler } from '../api/types'
-import { boilerMap } from '../lib/format'
+import { boilerMap, sortBoilers } from '../lib/format'
 
 export function useBoilers() {
   const [boilers, setBoilers] = useState<Boiler[]>([])
@@ -12,7 +12,7 @@ export function useBoilers() {
     boilersApi
       .list()
       .then((result) => {
-        if (!cancelled) setBoilers(result.data.items)
+        if (!cancelled) setBoilers(sortBoilers(result.data.items))
       })
       .catch(() => {
         // pages surface their own errors; the selector just stays empty

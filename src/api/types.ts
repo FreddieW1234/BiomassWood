@@ -66,7 +66,8 @@ export type Boiler = Timestamps & {
   operator: string
   rhi_number: string
   serial_number_2: string
-  meter_serial: string
+  heat_calculator: string
+  flowmeter: string
   meter_changed_on: string
   commissioned_on: string
   opening_reading: number

@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { boilersApi, sitesApi } from '../api/client'
 import type { Boiler } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
-import { idValue } from '../lib/format'
+import { idValue, sortBoilers } from '../lib/format'
 import { BOILER_STATUSES, FUEL_TYPES, MANUFACTURERS, fuelLabel, statusLabel } from '../lib/options'
 
 const empty = () => ({
@@ -26,7 +27,8 @@ const empty = () => ({
   operator: '',
   rhi_number: '',
   serial_number_2: '',
-  meter_serial: '',
+  heat_calculator: '',
+  flowmeter: '',
   meter_changed_on: '',
   commissioned_on: '',
   opening_reading: '',
@@ -44,13 +46,27 @@ const empty = () => ({
 
 export function Boilers() {
   const { items: sites } = useList(sitesApi)
+  const [showSold, setShowSold] = useState(false)
 
   return (
     <RecordPage<Boiler>
       title="Boilers"
-      blurb="Master register. Cleaning, fuel, meters and tasks all point at these rows. Status stays on the boiler when it is sold or archived."
+      blurb="Master register. Cleaning, fuel, readings and tasks all point at these rows. Status stays on the boiler when it is sold or archived."
       tableTitle="Register"
       api={boilersApi}
+      transformItems={(items) =>
+        sortBoilers(showSold ? items : items.filter((b) => b.status !== 'SOLD_TRANSFERRED'))
+      }
+      toolbar={
+        <label className="toolbar-toggle">
+          <input
+            type="checkbox"
+            checked={showSold}
+            onChange={(event) => setShowSold(event.target.checked)}
+          />
+          Show sold boilers
+        </label>
+      }
       empty={empty}
       toForm={(b) => ({
         number: b.number,
@@ -73,7 +89,8 @@ export function Boilers() {
         operator: b.operator,
         rhi_number: b.rhi_number,
         serial_number_2: b.serial_number_2,
-        meter_serial: b.meter_serial,
+        heat_calculator: b.heat_calculator,
+        flowmeter: b.flowmeter,
         meter_changed_on: b.meter_changed_on,
         commissioned_on: b.commissioned_on,
         opening_reading: b.opening_reading ? String(b.opening_reading) : '',
@@ -136,7 +153,8 @@ export function Boilers() {
         { name: 'emissions_certificate', label: 'Emissions certificate' },
         { name: 'permitted_fuels', label: 'Permitted fuels' },
         { name: 'heat_uses', label: 'Heat uses', placeholder: 'Space heating, DHW, process, drying…' },
-        { name: 'meter_serial', label: 'Meter number', width: 'half' },
+        { name: 'heat_calculator', label: 'Heat calculator', width: 'half' },
+        { name: 'flowmeter', label: 'Flowmeter', width: 'half' },
         { name: 'meter_changed_on', label: 'Meter changed', kind: 'date', width: 'half' },
         { name: 'opening_reading', label: 'Opening meter reading', kind: 'number' },
         { name: 'sold_on', label: 'Sold / transferred', kind: 'date', width: 'half' },
@@ -171,7 +189,8 @@ export function Boilers() {
           cell: (item) =>
             [item.serial_number, item.serial_number_2].filter(Boolean).join(' / ') || '—',
         },
-        { header: 'Meter', className: 'nowrap', cell: (item) => item.meter_serial || '—' },
+        { header: 'Heat calculator', className: 'nowrap', cell: (item) => item.heat_calculator || '—' },
+        { header: 'Flowmeter', className: 'nowrap', cell: (item) => item.flowmeter || '—' },
         { header: 'Location', cell: (item) => item.location || '—' },
       ]}
     />

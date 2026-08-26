@@ -35,6 +35,7 @@ export function Documents() {
     }),
   })
   const [file, setFile] = useState<File | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
   const [options, setOptions] = useState<{ value: string; label: string }[]>([])
 
   useEffect(() => {
@@ -70,21 +71,41 @@ export function Documents() {
       }
     }
     setFile(null)
+    setFormOpen(false)
+  }
+
+  function close() {
+    ledger.cancel()
+    setFile(null)
+    setFormOpen(false)
   }
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <h1>Documents</h1>
-        <p>
-          Evidence files stored on the office server. Save metadata first, then the file is uploaded
-          against that row (invoices, tickets, certificates, photos).
-        </p>
+    <div className="page wide">
+      <div className="page-head with-action">
+        <div>
+          <h1>Documents</h1>
+          <p>
+            Evidence files stored on the office server. Save metadata first, then the file is uploaded
+            against that row (invoices, tickets, certificates, photos).
+          </p>
+        </div>
+        {!formOpen && (
+          <button type="button" className="button" onClick={() => setFormOpen(true)}>
+            New document
+          </button>
+        )}
       </div>
 
-      <div className="split">
-        <form className="card form-card" onSubmit={(event) => void onSubmit(event)}>
-          <h2>{ledger.editingId ? `Edit #${ledger.editingId}` : 'New document'}</h2>
+      {formOpen && (
+        <form className="card form-panel" onSubmit={(event) => void onSubmit(event)}>
+          <div className="card-head">
+            <h2>{ledger.editingId ? 'Edit document' : 'New document'}</h2>
+            <button type="button" className="text-button" onClick={close}>
+              Close
+            </button>
+          </div>
+          <div className="form-body">
           <label>
             Linked to
             <select
@@ -172,25 +193,18 @@ export function Documents() {
               rows={2}
             />
           </label>
+          </div>
           <div className="row">
             <button type="submit" className="button" disabled={ledger.saving}>
               {ledger.editingId ? 'Save changes' : 'Add document'}
             </button>
-            {ledger.editingId && (
-              <button
-                type="button"
-                className="button ghost"
-                onClick={() => {
-                  ledger.cancel()
-                  setFile(null)
-                }}
-              >
-                Cancel
-              </button>
-            )}
+            <button type="button" className="button ghost" onClick={close}>
+              Cancel
+            </button>
           </div>
           {ledger.error && <p className="err">{ledger.error}</p>}
         </form>
+      )}
 
         <section className="card">
           <div className="card-head">
@@ -232,7 +246,14 @@ export function Documents() {
                             Download
                           </button>
                         )}
-                        <button type="button" className="text-button" onClick={() => ledger.edit(item)}>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => {
+                            ledger.edit(item)
+                            setFormOpen(true)
+                          }}
+                        >
                           Edit
                         </button>
                         <button
@@ -250,7 +271,6 @@ export function Documents() {
             </div>
           )}
         </section>
-      </div>
     </div>
   )
 }

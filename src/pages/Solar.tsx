@@ -1,4 +1,4 @@
-import { useMemo, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { solarReadingsApi, solarSubmissionsApi } from '../api/client'
 import type { SolarReading, SolarSubmission } from '../api/types'
 import { useLedger } from '../hooks/useLedger'
@@ -53,30 +53,64 @@ export function Solar() {
     return map
   }, [readings.items])
 
-  function onSubmitReading(event: FormEvent) {
+  const [readingFormOpen, setReadingFormOpen] = useState(false)
+  const [submissionFormOpen, setSubmissionFormOpen] = useState(false)
+
+  async function onSubmitReading(event: FormEvent) {
     event.preventDefault()
-    void readings.submit()
+    const saved = await readings.submit()
+    if (saved) setReadingFormOpen(false)
   }
 
-  function onSubmitSubmission(event: FormEvent) {
+  async function onSubmitSubmission(event: FormEvent) {
     event.preventDefault()
-    void submissions.submit()
+    const saved = await submissions.submit()
+    if (saved) setSubmissionFormOpen(false)
+  }
+
+  function closeReading() {
+    readings.cancel()
+    setReadingFormOpen(false)
+  }
+
+  function closeSubmission() {
+    submissions.cancel()
+    setSubmissionFormOpen(false)
   }
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <h1>Solar</h1>
-        <p>
-          Generation meter readings and FIT submissions for the solar system. The "generated"
-          column shows units since the previous reading.
-        </p>
+    <div className="page wide">
+      <div className="page-head with-action">
+        <div>
+          <h1>Solar</h1>
+          <p>
+            Generation meter readings and FIT submissions for the solar system. The "generated"
+            column shows units since the previous reading.
+          </p>
+        </div>
+        <div className="head-actions">
+          {!readingFormOpen && (
+            <button type="button" className="button" onClick={() => setReadingFormOpen(true)}>
+              New reading
+            </button>
+          )}
+          {!submissionFormOpen && (
+            <button type="button" className="button ghost" onClick={() => setSubmissionFormOpen(true)}>
+              New submission
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="split">
-        <form className="card form-card" onSubmit={onSubmitReading}>
-          <h2>{readings.editingId ? `Edit reading #${readings.editingId}` : 'New meter reading'}</h2>
-          <div className="field-row">
+      {readingFormOpen && (
+        <form className="card form-panel" onSubmit={(event) => void onSubmitReading(event)}>
+          <div className="card-head">
+            <h2>{readings.editingId ? 'Edit meter reading' : 'New meter reading'}</h2>
+            <button type="button" className="text-button" onClick={closeReading}>
+              Close
+            </button>
+          </div>
+          <div className="form-grid">
             <label>
               Date
               <input
@@ -97,27 +131,26 @@ export function Solar() {
                 required
               />
             </label>
+            <label className="field-wide">
+              Notes
+              <textarea
+                value={readings.form.notes}
+                onChange={(e) => readings.setField('notes', e.target.value)}
+                rows={2}
+              />
+            </label>
           </div>
-          <label>
-            Notes
-            <textarea
-              value={readings.form.notes}
-              onChange={(e) => readings.setField('notes', e.target.value)}
-              rows={2}
-            />
-          </label>
           <div className="row">
             <button type="submit" className="button" disabled={readings.saving}>
               {readings.editingId ? 'Save changes' : 'Add reading'}
             </button>
-            {readings.editingId && (
-              <button type="button" className="button ghost" onClick={readings.cancel}>
-                Cancel
-              </button>
-            )}
+            <button type="button" className="button ghost" onClick={closeReading}>
+              Cancel
+            </button>
           </div>
           {readings.error && <p className="err">{readings.error}</p>}
         </form>
+      )}
 
         <section className="card">
           <div className="card-head">
@@ -152,7 +185,14 @@ export function Solar() {
                         <td className="num">{delta ? figure(delta.days) : '—'}</td>
                         <td className="wrap">{item.notes || '—'}</td>
                         <td className="actions">
-                          <button type="button" className="text-button" onClick={() => readings.edit(item)}>
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => {
+                              readings.edit(item)
+                              setReadingFormOpen(true)
+                            }}
+                          >
                             Edit
                           </button>
                           <button
@@ -171,14 +211,16 @@ export function Solar() {
             </div>
           )}
         </section>
-      </div>
 
-      <div className="split" style={{ marginTop: '1.5rem' }}>
-        <form className="card form-card" onSubmit={onSubmitSubmission}>
-          <h2>
-            {submissions.editingId ? `Edit submission #${submissions.editingId}` : 'New FIT submission'}
-          </h2>
-          <div className="field-row">
+      {submissionFormOpen && (
+        <form className="card form-panel" onSubmit={(event) => void onSubmitSubmission(event)}>
+          <div className="card-head">
+            <h2>{submissions.editingId ? 'Edit FIT submission' : 'New FIT submission'}</h2>
+            <button type="button" className="text-button" onClick={closeSubmission}>
+              Close
+            </button>
+          </div>
+          <div className="form-grid">
             <label>
               Date
               <input
@@ -196,8 +238,6 @@ export function Solar() {
                 placeholder="e.g. 12"
               />
             </label>
-          </div>
-          <div className="field-row">
             <label>
               Meter reading
               <input
@@ -218,8 +258,6 @@ export function Solar() {
                 onChange={(e) => submissions.setField('units', e.target.value)}
               />
             </label>
-          </div>
-          <div className="field-row">
             <label>
               Price per unit (£)
               <input
@@ -240,27 +278,26 @@ export function Solar() {
                 onChange={(e) => submissions.setField('total', e.target.value)}
               />
             </label>
+            <label className="field-wide">
+              Notes
+              <textarea
+                value={submissions.form.notes}
+                onChange={(e) => submissions.setField('notes', e.target.value)}
+                rows={2}
+              />
+            </label>
           </div>
-          <label>
-            Notes
-            <textarea
-              value={submissions.form.notes}
-              onChange={(e) => submissions.setField('notes', e.target.value)}
-              rows={2}
-            />
-          </label>
           <div className="row">
             <button type="submit" className="button" disabled={submissions.saving}>
               {submissions.editingId ? 'Save changes' : 'Add submission'}
             </button>
-            {submissions.editingId && (
-              <button type="button" className="button ghost" onClick={submissions.cancel}>
-                Cancel
-              </button>
-            )}
+            <button type="button" className="button ghost" onClick={closeSubmission}>
+              Cancel
+            </button>
           </div>
           {submissions.error && <p className="err">{submissions.error}</p>}
         </form>
+      )}
 
         <section className="card">
           <div className="card-head">
@@ -295,7 +332,14 @@ export function Solar() {
                       <td className="num">{item.price_per_unit ? money(item.price_per_unit) : '—'}</td>
                       <td className="num">{item.total ? money(item.total) : '—'}</td>
                       <td className="actions">
-                        <button type="button" className="text-button" onClick={() => submissions.edit(item)}>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => {
+                            submissions.edit(item)
+                            setSubmissionFormOpen(true)
+                          }}
+                        >
                           Edit
                         </button>
                         <button
@@ -313,7 +357,6 @@ export function Solar() {
             </div>
           )}
         </section>
-      </div>
     </div>
   )
 }

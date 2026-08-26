@@ -1,6 +1,7 @@
-import { type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import type { Resource } from '../api/client'
 import { useLedger } from '../hooks/useLedger'
+import { recordLabel } from '../lib/format'
 
 export type RecordField = {
   name: string
@@ -33,6 +34,10 @@ type Props<T extends { id: number }> = {
   fields: RecordField[]
   columns: RecordColumn<T>[]
   hint?: string
+  /** Filter and/or sort the rows before they are listed. */
+  transformItems?: (items: T[]) => T[]
+  /** Controls shown beside the "New record" button. */
+  toolbar?: ReactNode
 }
 
 export function RecordPage<T extends { id: number }>({
@@ -45,116 +50,127 @@ export function RecordPage<T extends { id: number }>({
   fields,
   columns,
   hint,
+  transformItems,
+  toolbar,
 }: Props<T>) {
   const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm })
+  const [formOpen, setFormOpen] = useState(false)
+  const rows = transformItems ? transformItems(ledger.items) : ledger.items
+  const editing = ledger.items.find((item) => item.id === ledger.editingId)
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    void ledger.submit()
+    const saved = await ledger.submit()
+    if (saved) setFormOpen(false)
   }
 
-  const rows: RecordField[][] = []
-  for (const field of fields) {
-    const last = rows.at(-1)
-    if (field.width === 'half' && last?.length === 1 && last[0].width === 'half') {
-      last.push(field)
-    } else {
-      rows.push([field])
-    }
+  function close() {
+    ledger.cancel()
+    setFormOpen(false)
+  }
+
+  function startEdit(item: T) {
+    ledger.edit(item)
+    setFormOpen(true)
   }
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <h1>{title}</h1>
-        <p>{blurb}</p>
+    <div className="page wide">
+      <div className="page-head with-action">
+        <div>
+          <h1>{title}</h1>
+          <p>{blurb}</p>
+        </div>
+        <div className="head-actions">
+          {toolbar}
+          {!formOpen && (
+            <button type="button" className="button" onClick={() => setFormOpen(true)}>
+              New record
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="split">
-        <form className="card form-card" onSubmit={onSubmit}>
-          <h2>{ledger.editingId ? `Edit #${ledger.editingId}` : 'New record'}</h2>
-          {rows.map((row, index) => {
-            const inner = row.map((field) => (
+      {formOpen && (
+        <form className="card form-panel" onSubmit={(event) => void onSubmit(event)}>
+          <div className="card-head">
+            <h2>{editing ? `Edit ${recordLabel(editing)}` : 'New record'}</h2>
+            <button type="button" className="text-button" onClick={close}>
+              Close
+            </button>
+          </div>
+          <div className="form-grid">
+            {fields.map((field) => (
               <Field
                 key={field.name}
                 field={field}
                 value={ledger.form[field.name] ?? ''}
                 onChange={(value) => ledger.setField(field.name, value)}
               />
-            ))
-            if (row.length === 2) {
-              return (
-                <div className="field-row" key={row.map((f) => f.name).join('-')}>
-                  {inner}
-                </div>
-              )
-            }
-            return <div key={row[0]?.name ?? index}>{inner}</div>
-          })}
+            ))}
+          </div>
           <div className="row">
             <button type="submit" className="button" disabled={ledger.saving}>
               {ledger.editingId ? 'Save changes' : 'Add record'}
             </button>
-            {ledger.editingId && (
-              <button type="button" className="button ghost" onClick={ledger.cancel}>
-                Cancel
-              </button>
-            )}
+            <button type="button" className="button ghost" onClick={close}>
+              Cancel
+            </button>
           </div>
           {ledger.error && <p className="err">{ledger.error}</p>}
           {hint && <p className="hint">{hint}</p>}
         </form>
+      )}
 
-        <section className="card">
-          <div className="card-head">
-            <h2>{tableTitle}</h2>
-            <span className="count">{ledger.items.length}</span>
-          </div>
-          {ledger.loading ? (
-            <p className="muted">Loading…</p>
-          ) : ledger.items.length === 0 ? (
-            <p className="muted">Nothing recorded yet.</p>
-          ) : (
-            <div className="table-wrap">
-              <table className="ledger">
-                <thead>
-                  <tr>
-                    {columns.map((column) => (
-                      <th key={column.header} className={column.className}>
-                        {column.header}
-                      </th>
-                    ))}
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {ledger.items.map((item) => (
-                    <tr key={item.id}>
-                      {columns.map((column) => (
-                        <td key={column.header} className={column.className}>
-                          {column.cell(item)}
-                        </td>
-                      ))}
-                      <td className="actions">
-                        <button type="button" className="text-button" onClick={() => ledger.edit(item)}>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="text-button danger"
-                          onClick={() => void ledger.remove(item.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
+      <section className="card">
+        <div className="card-head">
+          <h2>{tableTitle}</h2>
+          <span className="count">{rows.length}</span>
+        </div>
+        {ledger.loading ? (
+          <p className="muted">Loading…</p>
+        ) : rows.length === 0 ? (
+          <p className="muted">Nothing to show.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="ledger">
+              <thead>
+                <tr>
+                  {columns.map((column) => (
+                    <th key={column.header} className={column.className}>
+                      {column.header}
+                    </th>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </div>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((item) => (
+                  <tr key={item.id}>
+                    {columns.map((column) => (
+                      <td key={column.header} className={column.className}>
+                        {column.cell(item)}
+                      </td>
+                    ))}
+                    <td className="actions">
+                      <button type="button" className="text-button" onClick={() => startEdit(item)}>
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="text-button danger"
+                        onClick={() => void ledger.remove(item.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
@@ -170,7 +186,7 @@ function Field({
 }) {
   const kind = field.kind ?? 'text'
   return (
-    <label>
+    <label className={kind === 'textarea' ? 'field-wide' : undefined}>
       {field.label}
       {kind === 'textarea' ? (
         <textarea

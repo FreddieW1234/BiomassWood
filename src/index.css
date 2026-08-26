@@ -200,9 +200,53 @@ p {
   max-width: 1200px;
 }
 
+/* Ledger pages give the table the full width; the form opens above it. */
+.page.wide {
+  max-width: none;
+}
+
 .page-head p {
   max-width: 46rem;
   color: var(--ink-soft);
+}
+
+.page-head.with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.page-head.with-action .button {
+  flex: none;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: none;
+}
+
+/* Inline checkbox in a page toolbar: overrides the stacked form-label style. */
+.toolbar-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.toolbar-toggle input[type='checkbox'] {
+  width: auto;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--ink);
 }
 
 .muted {
@@ -296,6 +340,32 @@ p {
 
 .form-card h2 {
   margin-bottom: 1rem;
+}
+
+/* Full-width form panel: fields flow into as many columns as fit. */
+.form-panel .form-grid,
+.form-panel .form-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0 0.9rem;
+  align-items: start;
+}
+
+/* Pre-existing two-up rows dissolve so their fields join the outer grid. */
+.form-panel .form-body > .field-row {
+  display: contents;
+}
+
+.form-panel .form-grid .field-wide,
+.form-panel .form-body .field-wide,
+.form-panel .form-grid label:has(textarea),
+.form-panel .form-body label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.form-panel .form-grid label,
+.form-panel .form-body label {
+  margin-bottom: 0.75rem;
 }
 
 label {

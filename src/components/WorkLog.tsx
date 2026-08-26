@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import type { Resource } from '../api/client'
 import type { CleaningEntry } from '../api/types'
 import { useBoilers } from '../hooks/useBoilers'
@@ -43,23 +43,44 @@ export function WorkLog({ title, blurb, workLabel, api }: Props) {
     }),
   })
 
-  function onSubmit(event: FormEvent) {
+  const [formOpen, setFormOpen] = useState(false)
+
+  async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    void ledger.submit()
+    const saved = await ledger.submit()
+    if (saved) setFormOpen(false)
+  }
+
+  function close() {
+    ledger.cancel()
+    setFormOpen(false)
   }
 
   const overdue = (entry: CleaningEntry) => entry.next_due !== '' && entry.next_due < today()
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <h1>{title}</h1>
-        <p>{blurb}</p>
+    <div className="page wide">
+      <div className="page-head with-action">
+        <div>
+          <h1>{title}</h1>
+          <p>{blurb}</p>
+        </div>
+        {!formOpen && (
+          <button type="button" className="button" onClick={() => setFormOpen(true)}>
+            New entry
+          </button>
+        )}
       </div>
 
-      <div className="split">
-        <form className="card form-card" onSubmit={onSubmit}>
-          <h2>{ledger.editingId ? `Edit entry #${ledger.editingId}` : 'New entry'}</h2>
+      {formOpen && (
+        <form className="card form-panel" onSubmit={(event) => void onSubmit(event)}>
+          <div className="card-head">
+            <h2>{ledger.editingId ? 'Edit entry' : 'New entry'}</h2>
+            <button type="button" className="text-button" onClick={close}>
+              Close
+            </button>
+          </div>
+          <div className="form-body">
           <div className="field-row">
             <label>
               Date
@@ -141,18 +162,18 @@ export function WorkLog({ title, blurb, workLabel, api }: Props) {
               placeholder="Optional"
             />
           </label>
+          </div>
           <div className="row">
             <button type="submit" className="button" disabled={ledger.saving}>
               {ledger.editingId ? 'Save changes' : 'Add entry'}
             </button>
-            {ledger.editingId && (
-              <button type="button" className="button ghost" onClick={ledger.cancel}>
-                Cancel
-              </button>
-            )}
+            <button type="button" className="button ghost" onClick={close}>
+              Cancel
+            </button>
           </div>
           {ledger.error && <p className="err">{ledger.error}</p>}
         </form>
+      )}
 
         <section className="card">
           <div className="card-head">
@@ -195,7 +216,10 @@ export function WorkLog({ title, blurb, workLabel, api }: Props) {
                         <button
                           type="button"
                           className="text-button"
-                          onClick={() => ledger.edit(entry)}
+                          onClick={() => {
+                            ledger.edit(entry)
+                            setFormOpen(true)
+                          }}
                         >
                           Edit
                         </button>
@@ -214,7 +238,6 @@ export function WorkLog({ title, blurb, workLabel, api }: Props) {
             </div>
           )}
         </section>
-      </div>
     </div>
   )
 }
