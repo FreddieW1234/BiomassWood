@@ -1,4 +1,10 @@
-import { boilersApi, fuelBatchesApi, fuelDeliveriesApi, fuelStoresApi } from '../api/client'
+import {
+  boilersApi,
+  fuelBatchesApi,
+  fuelDeliveriesApi,
+  fuelStoresApi,
+  fuelSuppliersApi,
+} from '../api/client'
 import type { FuelDelivery } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
@@ -26,9 +32,24 @@ const empty = () => ({
 })
 
 export function FuelDeliveries() {
-  const { items: batches } = useList(fuelBatchesApi)
+  const { items: batches, byId: batchesById } = useList(fuelBatchesApi)
   const { items: stores, byId: storesById } = useList(fuelStoresApi)
   const { items: boilers, byId: boilersById } = useList(boilersApi)
+  const { byId: suppliersById } = useList(fuelSuppliersApi)
+
+  const supplierName = (batchId: number) => {
+    const supplierId = batchesById.get(batchId)?.supplier_id
+    return (supplierId && suppliersById.get(supplierId)?.name) || '—'
+  }
+
+  // The sheet these came from has a column per fuel type; the quantity lands
+  // in whichever column matches the batch. Units are kg unless stated.
+  const quantityIn = (item: FuelDelivery, fuelType: string) => {
+    if (batchesById.get(item.batch_id)?.fuel_type !== fuelType) return ''
+    return item.unit && item.unit !== 'kg'
+      ? `${figure(item.quantity)} ${item.unit}`
+      : figure(item.quantity)
+  }
 
   return (
     <RecordPage<FuelDelivery>
@@ -88,8 +109,11 @@ export function FuelDeliveries() {
       ]}
       columns={[
         { header: 'Date', className: 'nowrap', cell: (item) => showDate(item.date) },
-        { header: 'Batch', className: 'nowrap', cell: (item) => batchLabel(item.batch_id, batches) },
-        { header: 'Qty', className: 'num', cell: (item) => `${figure(item.quantity)} ${item.unit}` },
+        { header: 'Supplier name', className: 'nowrap', cell: (item) => supplierName(item.batch_id) },
+        { header: 'Delivery note number', className: 'num', cell: (item) => item.ticket_number || '—' },
+        { header: 'Round', className: 'num', cell: (item) => quantityIn(item, 'roundwood') },
+        { header: 'Chip', className: 'num', cell: (item) => quantityIn(item, 'wood_chip') },
+        { header: 'Pellet', className: 'num', cell: (item) => quantityIn(item, 'pellet') },
         { header: 'Store', cell: (item) => (item.store_id ? storesById.get(item.store_id)?.name || '—' : '—') },
         { header: 'Invoice', className: 'nowrap', cell: (item) => item.invoice_number || '—' },
         {
