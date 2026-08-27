@@ -108,6 +108,33 @@ export const CLEANING_FORMS: CleaningForm[] = [
   },
   {
     code: 'C3',
+    title: 'Fortnightly checks',
+    frequency: 'Twice a month',
+    intervalDays: 15,
+    sections: [
+      {
+        items: [
+          { no: 20, text: 'Boiler pipes brushed and dust residue removed from ash box area', columns: DONE_NR_DEFECT },
+          { no: 21, text: 'Upper air deflector removed and cleaned', columns: DONE_NR_DEFECT },
+          {
+            no: 22,
+            text: 'Boiler door and service-door gaskets checked for damage, compression and air-tightness',
+            columns: DONE_NR_DEFECT,
+          },
+          { no: 23, text: 'Ash removed from convection surfaces', columns: DONE_NR_DEFECT },
+          { no: 24, text: 'Fire and convection parts swept', columns: DONE_NR_DEFECT },
+        ],
+      },
+    ],
+    extras: [
+      { name: 'gasket_result', label: 'Gasket result', kind: 'select', options: ['Pass', 'Fail'] },
+      { name: 'gasket_action', label: 'Gasket adjustment or replacement' },
+      { name: 'convection_condition', label: 'Soot / ash condition on convection surfaces' },
+      { name: 'operator_signature', label: 'Operator signature' },
+    ],
+  },
+  {
+    code: 'C4',
     title: 'Monthly checks',
     frequency: 'Monthly',
     intervalDays: 30,
@@ -134,33 +161,6 @@ export const CLEANING_FORMS: CleaningForm[] = [
       { name: 'contractor_reference', label: 'Contractor report reference' },
       { name: 'operator_signature', label: 'Operator signature' },
       { name: 'supervisor_check', label: 'Supervisor / competent-person check' },
-    ],
-  },
-  {
-    code: 'C4',
-    title: 'Fortnightly checks',
-    frequency: 'Twice a month',
-    intervalDays: 15,
-    sections: [
-      {
-        items: [
-          { no: 20, text: 'Boiler pipes brushed and dust residue removed from ash box area', columns: DONE_NR_DEFECT },
-          { no: 21, text: 'Upper air deflector removed and cleaned', columns: DONE_NR_DEFECT },
-          {
-            no: 22,
-            text: 'Boiler door and service-door gaskets checked for damage, compression and air-tightness',
-            columns: DONE_NR_DEFECT,
-          },
-          { no: 23, text: 'Ash removed from convection surfaces', columns: DONE_NR_DEFECT },
-          { no: 24, text: 'Fire and convection parts swept', columns: DONE_NR_DEFECT },
-        ],
-      },
-    ],
-    extras: [
-      { name: 'gasket_result', label: 'Gasket result', kind: 'select', options: ['Pass', 'Fail'] },
-      { name: 'gasket_action', label: 'Gasket adjustment or replacement' },
-      { name: 'convection_condition', label: 'Soot / ash condition on convection surfaces' },
-      { name: 'operator_signature', label: 'Operator signature' },
     ],
   },
   {
