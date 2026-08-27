@@ -163,6 +163,7 @@ export type FuelDelivery = Timestamps & {
   date: string
   quantity: number
   unit: string
+  bagged: string
   invoice_number: string
   ticket_number: string
   storage_condition: string

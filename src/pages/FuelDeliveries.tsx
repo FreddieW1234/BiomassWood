@@ -9,7 +9,15 @@ import type { FuelDelivery } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { boilerLabel, figure, idValue, showDate, today } from '../lib/format'
-import { fuelLabel } from '../lib/options'
+import { YES_NO, fuelLabel } from '../lib/options'
+
+// Rows created before this field existed have no value at all, so tolerate undefined.
+function baggedMark(value: string | undefined) {
+  const text = (value ?? '').trim().toLowerCase()
+  if (text === 'yes') return '✓'
+  if (text === 'no') return '✗'
+  return '—'
+}
 
 function batchLabel(id: number, batches: { id: number; fuel_type: string }[]) {
   const batch = batches.find((item) => item.id === id)
@@ -23,6 +31,7 @@ const empty = () => ({
   date: today(),
   quantity: '',
   unit: 't',
+  bagged: '',
   invoice_number: '',
   ticket_number: '',
   storage_condition: '',
@@ -64,6 +73,7 @@ export function FuelDeliveries() {
         date: item.date,
         quantity: String(item.quantity),
         unit: item.unit,
+        bagged: item.bagged ?? '',
         invoice_number: item.invoice_number,
         ticket_number: item.ticket_number,
         storage_condition: item.storage_condition,
@@ -86,8 +96,16 @@ export function FuelDeliveries() {
         { name: 'quantity', label: 'Quantity', kind: 'number', required: true, width: 'half' },
         { name: 'unit', label: 'Unit', required: true, placeholder: 't, m³, kg', width: 'half' },
         {
+          name: 'bagged',
+          label: 'Bagged?',
+          kind: 'select',
+          options: YES_NO,
+          emptyLabel: 'Not recorded',
+          width: 'half',
+        },
+        {
           name: 'store_id',
-          label: 'Store',
+          label: 'Store location',
           kind: 'select',
           options: stores.map((store) => ({ value: String(store.id), label: store.name })),
           emptyLabel: 'Not set',
@@ -114,8 +132,11 @@ export function FuelDeliveries() {
         { header: 'Round', className: 'num', cell: (item) => quantityIn(item, 'roundwood') },
         { header: 'Chip', className: 'num', cell: (item) => quantityIn(item, 'wood_chip') },
         { header: 'Pellet', className: 'num', cell: (item) => quantityIn(item, 'pellet') },
-        { header: 'Store', cell: (item) => (item.store_id ? storesById.get(item.store_id)?.name || '—' : '—') },
-        { header: 'Invoice', className: 'nowrap', cell: (item) => item.invoice_number || '—' },
+        { header: 'Bagged?', className: 'nowrap', cell: (item) => baggedMark(item.bagged) },
+        {
+          header: 'Store Location',
+          cell: (item) => (item.store_id ? storesById.get(item.store_id)?.name || '—' : '—'),
+        },
         {
           header: 'Boiler',
           className: 'nowrap',

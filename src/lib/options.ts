@@ -20,6 +20,11 @@ export const SUPPLY_ROUTES = [
   { value: 'self_supplied', label: 'Self-supplied' },
 ]
 
+export const YES_NO = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+]
+
 export const STORE_TYPES = ['silo', 'bunker', 'barn', 'container', 'external bay', 'other']
 
 export const TASK_STATUSES = ['open', 'done', 'overdue']
