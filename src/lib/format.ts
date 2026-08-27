@@ -4,6 +4,14 @@ export function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
+/** Now, rounded to the nearest hour: 08:20 -> 08:00, 08:40 -> 09:00. */
+export function nearestHour(now = new Date()) {
+  const rounded = new Date(now)
+  if (rounded.getMinutes() >= 30) rounded.setHours(rounded.getHours() + 1)
+  rounded.setMinutes(0, 0, 0)
+  return `${String(rounded.getHours()).padStart(2, '0')}:00`
+}
+
 export function showDate(value: string) {
   if (!value) return '—'
   const [y, m, d] = value.split('-')

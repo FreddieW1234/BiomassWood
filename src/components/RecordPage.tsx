@@ -6,7 +6,7 @@ import { recordLabel } from '../lib/format'
 export type RecordField = {
   name: string
   label: string
-  kind?: 'text' | 'textarea' | 'date' | 'number' | 'select'
+  kind?: 'text' | 'textarea' | 'date' | 'time' | 'number' | 'select'
   required?: boolean
   placeholder?: string
   options?: { value: string; label: string }[]
@@ -221,7 +221,9 @@ function Field({
       ) : (
         <>
           <input
-            type={kind === 'date' ? 'date' : kind === 'number' ? 'number' : 'text'}
+            type={
+              kind === 'date' ? 'date' : kind === 'time' ? 'time' : kind === 'number' ? 'number' : 'text'
+            }
             inputMode={kind === 'number' ? 'decimal' : undefined}
             step={kind === 'number' ? field.step ?? 'any' : undefined}
             value={value}

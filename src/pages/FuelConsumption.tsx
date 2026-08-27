@@ -2,13 +2,13 @@ import { containersApi, fuelConsumptionApi, hoppersApi } from '../api/client'
 import type { FuelConsumption } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
-import { figure, showDate, today } from '../lib/format'
+import { figure, nearestHour, showDate, today } from '../lib/format'
 
 
 const empty = () => ({
   hopper_id: '',
   date: today(),
-  time: '',
+  time: nearestHour(),
   quantity: '',
   container_id: '',
   notes: '',
@@ -54,7 +54,7 @@ export function FuelConsumptionPage() {
           options: hoppers.map((hopper) => ({ value: String(hopper.id), label: hopper.name })),
         },
         { name: 'date', label: 'Date', kind: 'date', required: true, width: 'half' },
-        { name: 'time', label: 'Time', placeholder: 'e.g. 07:30', width: 'half' },
+        { name: 'time', label: 'Time', kind: 'time', width: 'half' },
         {
           name: 'quantity',
           label: 'Quantity',

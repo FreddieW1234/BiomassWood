@@ -653,6 +653,9 @@ textarea {
 @media (max-width: 980px) {
   .shell {
     grid-template-columns: 1fr;
+    /* Without an explicit 1fr for the content, the grid shares spare height
+       between both rows and the top bar grows to fill half the screen. */
+    grid-template-rows: auto 1fr;
   }
 
   .topbar {
