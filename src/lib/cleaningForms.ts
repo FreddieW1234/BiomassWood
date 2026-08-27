@@ -22,6 +22,8 @@ export type ExtraField = {
   placeholder?: string
   /** Prefilled on a new check; the operator can change it. */
   default?: string
+  /** Drop the blank choice, so the field always holds one of the options. */
+  noEmpty?: boolean
 }
 
 export type CleaningForm = {
@@ -51,8 +53,8 @@ export const CLEANING_FORMS: CleaningForm[] = [
           { no: 2, text: 'Burner operating normally', columns: DONE_DEFECT },
           { no: 3, text: 'Flame and combustion appear normal', columns: DONE_DEFECT },
           { no: 4, text: 'No abnormal smoke or smell', columns: DONE_DEFECT },
-          { no: 5, text: 'Boiler water temperature checked', columns: DONE_DEFECT, note: '°C' },
-          { no: 6, text: 'System pressure checked', columns: DONE_DEFECT, note: 'bar' },
+          { no: 5, text: 'Boiler water temperature checked', columns: DONE_DEFECT },
+          { no: 6, text: 'System pressure checked', columns: DONE_DEFECT },
           { no: 7, text: 'Ash accumulation checked', columns: DONE_DEFECT },
           { no: 8, text: 'Ash removed if required', columns: DONE_DEFECT },
           { no: 11, text: 'Service doors and covers closed and secure', columns: DONE_DEFECT },
@@ -69,7 +71,14 @@ export const CLEANING_FORMS: CleaningForm[] = [
       },
       { name: 'alarm_code', label: 'Alarm or fault code', default: 'None' },
       { name: 'action_required', label: 'Action required', kind: 'textarea', default: 'None' },
-      { name: 'action_completed', label: 'Action completed', kind: 'select', options: ['Yes', 'No'] },
+      {
+        name: 'action_completed',
+        label: 'Action completed',
+        kind: 'select',
+        options: ['Yes', 'No', 'N/A'],
+        default: 'N/A',
+        noEmpty: true,
+      },
       { name: 'operator_signature', label: 'Operator signature' },
     ],
   },

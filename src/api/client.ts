@@ -32,6 +32,7 @@ import type {
   SolarReading,
   SolarSubmission,
   AuthUser,
+  BulkResponse,
 } from './types'
 
 // The signed-in user's session token. Held in memory; AuthContext persists it.
@@ -126,16 +127,31 @@ export function getAlerts() {
   return request<ListResponse<AlertItem>>('/api/alerts')
 }
 
+export type ListQuery = Record<string, string | number | undefined>
+
 export type Resource<TItem> = {
-  list: () => Promise<ApiResult<ListResponse<TItem>>>
+  list: (query?: ListQuery) => Promise<ApiResult<ListResponse<TItem>>>
+  bulkCreate: (items: Record<string, unknown>[]) => Promise<ApiResult<BulkResponse>>
   create: (payload: Record<string, unknown>) => Promise<ApiResult<ItemResponse<TItem>>>
   update: (id: number, payload: Record<string, unknown>) => Promise<ApiResult<ItemResponse<TItem>>>
   remove: (id: number) => Promise<ApiResult<DeleteResponse>>
 }
 
+function queryString(query?: ListQuery) {
+  if (!query) return ''
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== '') params.set(key, String(value))
+  }
+  const text = params.toString()
+  return text ? `?${text}` : ''
+}
+
 function resource<TItem>(base: string): Resource<TItem> {
   return {
-    list: () => request<ListResponse<TItem>>(base),
+    list: (query) => request<ListResponse<TItem>>(`${base}${queryString(query)}`),
+    bulkCreate: (items) =>
+      request<BulkResponse>(`${base}/bulk`, { method: 'POST', body: JSON.stringify({ items }) }),
     create: (payload) =>
       request<ItemResponse<TItem>>(base, { method: 'POST', body: JSON.stringify(payload) }),
     update: (id, payload) =>

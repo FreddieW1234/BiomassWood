@@ -35,6 +35,17 @@ const empty = () => ({
   outcome: '',
 })
 
+function thisMonth() {
+  return today().slice(0, 7)
+}
+
+/** First and last day of a YYYY-MM value. */
+function monthRange(month: string) {
+  const [year, m] = month.split('-').map(Number)
+  const last = new Date(year, m, 0).getDate()
+  return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` }
+}
+
 function addDays(days: number) {
   const date = new Date()
   date.setDate(date.getDate() + days)
@@ -44,10 +55,27 @@ function addDays(days: number) {
 export function Cleaning() {
   const { boilers, byId } = useBoilers()
   const { user } = useAuth()
+  const [month, setMonth] = useState(thisMonth)
+  const [filterBoiler, setFilterBoiler] = useState('')
+
+  // The log runs to tens of thousands of rows, so only ever fetch one month.
+  const scopedApi = useMemo(() => {
+    const { from, to } = monthRange(month)
+    return {
+      ...cleaningApi,
+      list: () =>
+        cleaningApi.list({
+          from,
+          to,
+          limit: 2000,
+          boiler_id: filterBoiler || undefined,
+        }),
+    }
+  }, [month, filterBoiler])
   // Whoever is signed in is doing the check; their name, not their login.
   const operatorName = user?.display_name?.trim() || user?.username || ''
   const ledger = useLedger<CleaningEntry, ReturnType<typeof empty>>({
-    api: cleaningApi,
+    api: scopedApi,
     empty,
     toForm: (entry) => ({
       date: entry.date,
@@ -285,7 +313,7 @@ export function Cleaning() {
                         value={answers.extras[extra.name] ?? ''}
                         onChange={(event) => setExtra(extra.name, event.target.value)}
                       >
-                        <option value="">Not set</option>
+                        {!extra.noEmpty && <option value="">Not set</option>}
                         {(extra.options ?? []).map((option) => (
                           <option key={option} value={option}>
                             {option}
@@ -324,12 +352,22 @@ export function Cleaning() {
       <section className="card">
         <div className="card-head">
           <h2>Completed checks</h2>
-          <span className="count">{rows.length}</span>
+          <div className="head-actions">
+            <label className="toolbar-toggle">
+              Month
+              <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
+            </label>
+            <label className="toolbar-toggle">
+              Boiler
+              <BoilerSelect boilers={boilers} value={filterBoiler} onChange={setFilterBoiler} />
+            </label>
+            <span className="count">{rows.length}</span>
+          </div>
         </div>
         {ledger.loading ? (
           <p className="muted">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="muted">Nothing recorded yet.</p>
+          <p className="muted">No checks recorded in this month.</p>
         ) : (
           <div className="table-wrap">
             <table className="ledger">

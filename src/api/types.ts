@@ -353,7 +353,8 @@ export type DocumentEntry = Timestamps & {
   notes: string
 }
 
-export type ListResponse<T> = { items: T[] }
+export type ListResponse<T> = { items: T[]; total?: number }
+export type BulkResponse = { inserted: number; firstId: number | null; lastId: number | null }
 export type ItemResponse<T> = { item: T }
 export type DeleteResponse = { ok: boolean; id: number }
 

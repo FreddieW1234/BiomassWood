@@ -33,11 +33,13 @@ export function Dashboard() {
 
   useEffect(() => {
     let cancelled = false
+    // These tables run to tens of thousands of rows; the dashboard only ever
+    // shows the newest handful, and overdue work comes from /api/alerts.
     Promise.all([
-      cleaningApi.list(),
-      maintenanceApi.list(),
-      meterReadingsApi.list(),
-      earningsApi.list(),
+      cleaningApi.list({ limit: 200 }),
+      maintenanceApi.list({ limit: 200 }),
+      meterReadingsApi.list({ limit: 200 }),
+      earningsApi.list({ limit: 200 }),
       getAlerts().catch(() => ({ data: { items: [] as AlertItem[] } })),
     ])
       .then(([c, m, r, e, a]) => {
