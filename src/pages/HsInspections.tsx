@@ -3,7 +3,7 @@ import type { HsInspection } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { boilerLabel, idValue, showDate, today } from '../lib/format'
-import { HS_OUTCOMES } from '../lib/options'
+import { HS_OUTCOMES, displayLabel } from '../lib/options'
 
 const empty = () => ({
   site_id: '',
@@ -63,7 +63,7 @@ export function HsInspections() {
       columns={[
         { header: 'Date', className: 'nowrap', cell: (item) => showDate(item.date) },
         { header: 'Inspector', cell: (item) => item.inspector },
-        { header: 'Outcome', className: 'nowrap', cell: (item) => item.outcome || '—' },
+        { header: 'Outcome', className: 'nowrap', cell: (item) => displayLabel(item.outcome) },
         { header: 'Site', cell: (item) => (item.site_id ? sitesById.get(item.site_id)?.name || '—' : '—') },
         { header: 'Boiler', className: 'nowrap', cell: (item) => (item.boiler_id ? boilerLabel(boilersById.get(item.boiler_id)) : '—') },
         { header: 'Next due', className: 'nowrap', cell: (item) => showDate(item.next_due) },

@@ -10,7 +10,7 @@ import type { DocumentEntry, FuelStore } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { idValue } from '../lib/format'
-import { selectOptions, STORE_TYPES } from '../lib/options'
+import { displayLabel, selectOptions, STORE_TYPES } from '../lib/options'
 
 const empty = () => ({
   site_id: '',
@@ -165,7 +165,7 @@ export function FuelStores() {
             header: 'Site',
             cell: (item) => (item.site_id ? byId.get(item.site_id)?.name || `#${item.site_id}` : '—'),
           },
-          { header: 'Type', cell: (item) => item.store_type || '—' },
+          { header: 'Type', cell: (item) => displayLabel(item.store_type) },
           { header: 'Capacity', cell: (item) => item.capacity || '—' },
           {
             header: 'Image',
@@ -203,7 +203,7 @@ export function FuelStores() {
               </div>
               <div>
                 <dt>Type</dt>
-                <dd>{viewing.store_type || '—'}</dd>
+                <dd>{displayLabel(viewing.store_type)}</dd>
               </div>
               <div>
                 <dt>Capacity</dt>

@@ -3,7 +3,7 @@ import type { Defect } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { boilerLabel, showDate, today } from '../lib/format'
-import { selectOptions, DEFECT_SEVERITIES } from '../lib/options'
+import { displayLabel, selectOptions, DEFECT_SEVERITIES } from '../lib/options'
 
 const empty = () => ({
   boiler_id: '',
@@ -59,8 +59,8 @@ export function Defects() {
         { header: 'Date', className: 'nowrap', cell: (item) => showDate(item.date) },
         { header: 'Boiler', className: 'nowrap', cell: (item) => boilerLabel(byId.get(item.boiler_id)) },
         { header: 'Description', className: 'wrap', cell: (item) => item.description },
-        { header: 'Severity', className: 'nowrap', cell: (item) => item.severity || '—' },
-        { header: 'Status', className: 'nowrap', cell: (item) => item.status || '—' },
+        { header: 'Severity', className: 'nowrap', cell: (item) => displayLabel(item.severity) },
+        { header: 'Status', className: 'nowrap', cell: (item) => displayLabel(item.status) },
       ]}
     />
   )

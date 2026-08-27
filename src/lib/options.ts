@@ -83,10 +83,15 @@ export function selectOptions(values: string[]) {
   })
 }
 
-export function statusLabel(value: string) {
-  if (!value) return 'Active'
+/** Turn a stored enum value into something readable: shed -> Shed. */
+export function displayLabel(value: string, fallback = '—') {
+  if (!value) return fallback
   const text = value.replaceAll('_', ' ').toLowerCase()
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+export function statusLabel(value: string) {
+  return displayLabel(value, 'Active')
 }
 
 export function fuelLabel(value: string) {

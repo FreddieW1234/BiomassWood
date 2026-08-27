@@ -3,7 +3,7 @@ import type { MaintenanceTask } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
 import { boilerLabel, idValue, showDate, today } from '../lib/format'
-import { selectOptions, TASK_STATUSES } from '../lib/options'
+import { displayLabel, selectOptions, TASK_STATUSES } from '../lib/options'
 
 const empty = () => ({
   boiler_id: '',
@@ -80,7 +80,7 @@ export function MaintenanceTasks() {
         { header: 'Due', className: 'nowrap', cell: (item) => showDate(item.due_on) },
         { header: 'Boiler', className: 'nowrap', cell: (item) => boilerLabel(boilersById.get(item.boiler_id)) },
         { header: 'Title', cell: (item) => item.title },
-        { header: 'Status', className: 'nowrap', cell: (item) => item.status },
+        { header: 'Status', className: 'nowrap', cell: (item) => displayLabel(item.status) },
         {
           header: 'Template',
           cell: (item) => (item.template_id ? templatesById.get(item.template_id)?.name || '—' : '—'),
