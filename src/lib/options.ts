@@ -21,9 +21,28 @@ export const SUPPLY_ROUTES = [
 ]
 
 export const YES_NO = [
-  { value: 'yes', label: 'Yes' },
-  { value: 'no', label: 'No' },
+  { value: 'Yes', label: 'Yes' },
+  { value: 'No', label: 'No' },
 ]
+
+export const YES_NO_PENDING = [
+  { value: 'Yes', label: 'Yes' },
+  { value: 'No', label: 'No' },
+  { value: 'Pending', label: 'Pending' },
+]
+
+export const WORK_TYPES = [
+  'Routine maintenance',
+  'Minor repair',
+  'Major repair',
+  'Breakdown repair',
+  'Part replacement',
+  'Annual service',
+  'Adjustment / recommissioning',
+  'Meter work',
+  'Inspection',
+  'Other',
+].map((value) => ({ value, label: value }))
 
 export const STORE_TYPES = ['silo', 'bunker', 'shed', 'container', 'external bay', 'other']
 

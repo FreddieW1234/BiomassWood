@@ -7,16 +7,36 @@ type Props = {
   required?: boolean
 }
 
+export function isSold(boiler: Boiler) {
+  return boiler.status === 'SOLD_TRANSFERRED'
+}
+
 export function BoilerSelect({ boilers, value, onChange, required }: Props) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} required={required}>
+    <select
+      className="boiler-select"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      required={required}
+    >
       <option value="">{required ? 'Select a boiler…' : 'Not boiler-specific'}</option>
-      {boilers.map((boiler) => (
-        <option key={boiler.id} value={String(boiler.id)}>
-          No. {boiler.number} · {boiler.type}
-          {boiler.location ? ` · ${boiler.location}` : ''}
-        </option>
-      ))}
+      {boilers.map((boiler) => {
+        const sold = isSold(boiler)
+        const detail = [`No. ${boiler.number}`, boiler.type, boiler.location].filter(Boolean).join(' · ')
+        return (
+          <option
+            key={boiler.id}
+            value={String(boiler.id)}
+            // Sold boilers stay selectable for historic entries, but should be
+            // obvious. Option backgrounds are honoured on desktop browsers.
+            className={sold ? 'option-sold' : undefined}
+            style={sold ? { background: '#fdf3d0' } : undefined}
+          >
+            {detail}
+            {sold ? '  —  SOLD' : ''}
+          </option>
+        )
+      })}
     </select>
   )
 }

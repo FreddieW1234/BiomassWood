@@ -231,14 +231,56 @@ export type CleaningEntry = Timestamps & {
 
 export type MaintenanceEntry = Timestamps & {
   date: string
-  staff: string
+  job_no: string
   boiler_id: number | null
+  work_type: string
+  fault: string
   work_done: string
+  parts: string
+  staff: string
+  contractor: string
+  back_in_service: string
+  cost: number
+  invoice_ref: string
+  notifiable: string
+  ofgem_reported_on: string
+  record_source: string
+  photos: string
   duration: string
   next_due: string
-  parts: string
   engineer: string
   outcome: string
+  notes: string
+}
+
+export type MaintenancePart = Timestamps & {
+  purchase_date: string
+  order_no: string
+  boiler_id: number | null
+  part: string
+  part_number: string
+  quantity: number
+  supplier: string
+  unit_cost: number
+  total_cost: number
+  invoice_ref: string
+  fitted_on: string
+  fitted_by: string
+  notes: string
+}
+
+export type AnnualService = Timestamps & {
+  year: string
+  boiler_id: number | null
+  service_date: string
+  engineer_name: string
+  company: string
+  registration_no: string
+  certificate_ref: string
+  standard_met: string
+  invoice_ref: string
+  next_service_due: string
+  outstanding_actions: string
 }
 
 export type MeterReading = Timestamps & {

@@ -1288,3 +1288,40 @@ textarea {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Tabs reuse the view switch, but wrap on a narrow screen. */
+.view-switch.tabs {
+  flex-wrap: wrap;
+  align-self: flex-start;
+}
+
+.view-switch.tabs button {
+  min-height: 40px;
+}
+
+/* Sold boilers in a picker: honoured on desktop, ignored by mobile pickers. */
+.boiler-select option.option-sold {
+  background: #fdf3d0;
+}
+
+@media (max-width: 720px) {
+  .view-switch.tabs {
+    width: 100%;
+  }
+
+  .view-switch.tabs button {
+    flex: 1;
+    font-size: 0.76rem;
+    padding: 0.4rem 0.4rem;
+  }
+}
+
+.embedded-records {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.embedded-records .page-head.with-action {
+  margin-bottom: 0;
+}

@@ -18,7 +18,9 @@ import type {
   HsInspection,
   ItemResponse,
   ListResponse,
+  AnnualService,
   MaintenanceEntry,
+  MaintenancePart,
   MaintenanceTask,
   MaintenanceTemplate,
   LoginResponse,
@@ -156,6 +158,8 @@ export const fuelDeliveriesApi = resource<FuelDelivery>('/api/fuel-deliveries')
 export const fuelConsumptionApi = resource<FuelConsumption>('/api/fuel-consumption')
 export const cleaningApi = resource<CleaningEntry>('/api/cleaning')
 export const maintenanceApi = resource<MaintenanceEntry>('/api/maintenance')
+export const maintenancePartsApi = resource<MaintenancePart>('/api/maintenance-parts')
+export const annualServicesApi = resource<AnnualService>('/api/annual-services')
 export const meterReadingsApi = resource<MeterReading>('/api/meter-readings')
 export const earningsApi = resource<EarningEntry>('/api/earnings')
 export const maintenanceTemplatesApi = resource<MaintenanceTemplate>('/api/maintenance-templates')

@@ -45,6 +45,8 @@ type Props<T extends { id: number }> = {
   onSaved?: (item: T) => void | Promise<void>
   /** Convert form strings into the shape the API expects. */
   toPayload?: (form: Record<string, string>) => Record<string, unknown>
+  /** Render inside an existing page (a tab) rather than as a page of its own. */
+  embedded?: boolean
 }
 
 export function RecordPage<T extends { id: number }>({
@@ -62,6 +64,7 @@ export function RecordPage<T extends { id: number }>({
   formExtras,
   onSaved,
   toPayload,
+  embedded,
 }: Props<T>) {
   const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm, toPayload })
   const [formOpen, setFormOpen] = useState(false)
@@ -86,12 +89,18 @@ export function RecordPage<T extends { id: number }>({
     setFormOpen(true)
   }
 
+  const Wrapper = embedded ? 'div' : 'div'
+
   return (
-    <div className="page wide">
+    <Wrapper className={embedded ? 'embedded-records' : 'page wide'}>
       <div className="page-head with-action">
-        <div>
-          <h1>{title}</h1>
-        </div>
+        {title ? (
+          <div>
+            <h1>{title}</h1>
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="head-actions">
           {toolbar}
           {!formOpen && (
@@ -184,7 +193,7 @@ export function RecordPage<T extends { id: number }>({
           </div>
         )}
       </section>
-    </div>
+    </Wrapper>
   )
 }
 
