@@ -14,6 +14,7 @@ import {
   emptyAnswers,
   findForm,
   parseAnswers,
+  startingAnswers,
   type CheckColumn,
   type CleaningAnswers,
 } from '../lib/cleaningForms'
@@ -71,7 +72,7 @@ export function Cleaning() {
     const definition = findForm(code)
     ledger.cancel()
     setChosenCode(code)
-    setAnswers(emptyAnswers())
+    setAnswers(startingAnswers(definition))
     ledger.setField('form_code', code)
     ledger.setField('date', today())
     ledger.setField('time', nearestHour())
@@ -96,14 +97,10 @@ export function Cleaning() {
   function setItem(no: number, column: CheckColumn, checked: boolean) {
     setAnswers((current) => {
       const key = String(no)
-      const item = { ...(current.items[key] ?? {}) }
-      // Done, N/R and Defect are independent, but Pass/Fail/NA are one choice.
-      if (checked && (column === 'pass' || column === 'fail' || column === 'na')) {
-        delete item.pass
-        delete item.fail
-        delete item.na
-      }
-      item[column] = checked
+      const existing = current.items[key] ?? {}
+      // One answer per item: ticking a box clears the others, and ticking the
+      // same box again clears it.
+      const item = checked ? { [column]: true, note: existing.note } : { note: existing.note }
       return { ...current, items: { ...current.items, [key]: item } }
     })
   }

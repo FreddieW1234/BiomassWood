@@ -385,15 +385,28 @@ label {
   font-weight: 600;
 }
 
+input[type='date'],
+input[type='time'] {
+  /* Without this these keep their intrinsic width and overhang the card. */
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.8rem;
 }
 
+label {
+  min-width: 0;
+}
+
 input,
 textarea,
 select {
+  min-width: 0;
+  max-width: 100%;
   font: 15px/1.4 var(--sans);
   color: var(--ink);
   background: #fdfcf9;

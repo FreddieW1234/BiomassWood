@@ -20,6 +20,8 @@ export type ExtraField = {
   kind?: 'text' | 'textarea' | 'number' | 'select' | 'date'
   options?: string[]
   placeholder?: string
+  /** Prefilled on a new check; the operator can change it. */
+  default?: string
 }
 
 export type CleaningForm = {
@@ -63,9 +65,10 @@ export const CLEANING_FORMS: CleaningForm[] = [
         label: 'Ash condition',
         kind: 'select',
         options: ['Low', 'Medium', 'High', 'Removed'],
+        default: 'Low',
       },
-      { name: 'alarm_code', label: 'Alarm or fault code' },
-      { name: 'action_required', label: 'Action required', kind: 'textarea' },
+      { name: 'alarm_code', label: 'Alarm or fault code', default: 'None' },
+      { name: 'action_required', label: 'Action required', kind: 'textarea', default: 'None' },
       { name: 'action_completed', label: 'Action completed', kind: 'select', options: ['Yes', 'No'] },
       { name: 'operator_signature', label: 'Operator signature' },
     ],
@@ -272,6 +275,15 @@ export type CleaningAnswers = {
 
 export function emptyAnswers(): CleaningAnswers {
   return { items: {}, extras: {} }
+}
+
+/** A blank check, with any prefilled record fields already filled in. */
+export function startingAnswers(form: CleaningForm | undefined): CleaningAnswers {
+  const extras: Record<string, string> = {}
+  for (const extra of form?.extras ?? []) {
+    if (extra.default) extras[extra.name] = extra.default
+  }
+  return { items: {}, extras }
 }
 
 export function parseAnswers(raw: string): CleaningAnswers {
