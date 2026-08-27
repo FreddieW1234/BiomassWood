@@ -37,6 +37,8 @@ type Props<T extends { id: number }> = {
   transformItems?: (items: T[]) => T[]
   /** Controls shown beside the "New record" button. */
   toolbar?: ReactNode
+  /** Extra buttons at the start of each row's actions cell. */
+  rowActions?: (item: T) => ReactNode
 }
 
 export function RecordPage<T extends { id: number }>({
@@ -50,6 +52,7 @@ export function RecordPage<T extends { id: number }>({
   hint,
   transformItems,
   toolbar,
+  rowActions,
 }: Props<T>) {
   const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm })
   const [formOpen, setFormOpen] = useState(false)
@@ -150,6 +153,7 @@ export function RecordPage<T extends { id: number }>({
                       </td>
                     ))}
                     <td className="actions">
+                      {rowActions?.(item)}
                       <button type="button" className="text-button" onClick={() => startEdit(item)}>
                         Edit
                       </button>

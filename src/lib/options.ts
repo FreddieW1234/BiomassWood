@@ -25,7 +25,7 @@ export const YES_NO = [
   { value: 'no', label: 'No' },
 ]
 
-export const STORE_TYPES = ['silo', 'bunker', 'barn', 'container', 'external bay', 'other']
+export const STORE_TYPES = ['silo', 'bunker', 'shed', 'container', 'external bay', 'other']
 
 export const TASK_STATUSES = ['open', 'done', 'overdue']
 
@@ -75,8 +75,12 @@ export const ALERT_LINKS: Record<string, string> = {
   documents: '/documents',
 }
 
+// Stored values stay lowercase; only the label is dressed up for display.
 export function selectOptions(values: string[]) {
-  return values.map((value) => ({ value, label: value.replaceAll('_', ' ') }))
+  return values.map((value) => {
+    const text = value.replaceAll('_', ' ')
+    return { value, label: text.charAt(0).toUpperCase() + text.slice(1) }
+  })
 }
 
 export function statusLabel(value: string) {

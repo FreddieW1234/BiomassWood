@@ -201,3 +201,20 @@ export async function downloadDocumentFile(id: number, filename: string) {
   link.remove()
   URL.revokeObjectURL(url)
 }
+
+/** The file endpoint needs the API key, so an <img src> cannot fetch it directly. */
+export async function documentObjectUrl(id: number) {
+  const { apiUrl, apiKey } = loadSettings()
+  const path = `/api/documents/${id}/file`
+  if (!apiUrl) throw new ApiError('No API URL configured in this build.', 0, path)
+  const headers = new Headers()
+  if (apiKey) headers.set('X-API-Key', apiKey)
+  let response: Response
+  try {
+    response = await fetch(joinUrl(apiUrl, path), { headers })
+  } catch {
+    throw new ApiError('Could not reach the office server.', 0, path)
+  }
+  if (!response.ok) throw new ApiError(`Request failed (${response.status})`, response.status, path)
+  return URL.createObjectURL(await response.blob())
+}

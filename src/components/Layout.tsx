@@ -22,8 +22,7 @@ export function Layout() {
             <circle cx="16" cy="16" r="2.2" fill="#efe6d4" />
           </svg>
           <div>
-            <strong>BiomassRecords</strong>
-            <span>Michton · Biomass Wood</span>
+            <strong>BiomassWood</strong>
           </div>
         </div>
 
