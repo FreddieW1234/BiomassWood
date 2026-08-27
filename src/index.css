@@ -682,3 +682,126 @@ textarea {
     white-space: normal;
   }
 }
+
+/* ---------- reading grid (boilers down, dates across) ---------- */
+
+.grid-scroll {
+  overflow: auto;
+  max-height: calc(100svh - 15rem);
+  border: 1px solid var(--card-line);
+  border-radius: 8px;
+}
+
+.grid-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-table th,
+.grid-table td {
+  padding: 0.32rem 0.6rem;
+  border-bottom: 1px solid var(--card-line);
+  white-space: nowrap;
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.grid-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--card);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+/* Boiler column stays put while the dates scroll under it. */
+.grid-table .boiler-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+  text-align: left;
+  font-weight: 600;
+  box-shadow: 1px 0 0 var(--card-line);
+}
+
+.grid-table thead .boiler-col {
+  z-index: 3;
+}
+
+.grid-table tbody tr:hover td {
+  background: var(--rust-soft);
+}
+
+.grid-table tbody tr:hover .boiler-col {
+  background: var(--rust-soft);
+}
+
+.cell-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.cell-button:hover {
+  text-decoration: underline;
+}
+
+.cell-button.empty {
+  color: var(--muted);
+}
+
+/* A meter swap makes the step negative: expected, so mark it quietly. */
+.cell-button.reset {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Implausible daily rate — almost always a mis-keyed reading. */
+.cell-button.suspect,
+.suspect-value {
+  color: var(--rust);
+  font-weight: 700;
+}
+
+.cell-button.suspect {
+  background: var(--rust-soft);
+  padding: 0.05rem 0.3rem;
+}
+
+.cell-input {
+  width: 5.5rem;
+  padding: 0.15rem 0.3rem;
+  font-size: 0.82rem;
+}
+
+.view-switch {
+  display: inline-flex;
+  border: 1px solid var(--card-line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.view-switch button {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.view-switch button.on {
+  background: var(--ink);
+  color: var(--paper, #fdfcf9);
+}
