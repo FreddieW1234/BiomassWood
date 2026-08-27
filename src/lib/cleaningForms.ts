@@ -53,12 +53,6 @@ export const CLEANING_FORMS: CleaningForm[] = [
           { no: 6, text: 'System pressure checked', columns: DONE_DEFECT, note: 'bar' },
           { no: 7, text: 'Ash accumulation checked', columns: DONE_DEFECT },
           { no: 8, text: 'Ash removed if required', columns: DONE_DEFECT },
-          {
-            no: 9,
-            text: 'Air and fuel supply checked against commissioning settings — adjust only if authorised',
-            columns: DONE_DEFECT,
-          },
-          { no: 10, text: 'Operating hours / heat meter reading recorded', columns: DONE_DEFECT, note: 'Reading' },
           { no: 11, text: 'Service doors and covers closed and secure', columns: DONE_DEFECT },
         ],
       },
@@ -143,11 +137,6 @@ export const CLEANING_FORMS: CleaningForm[] = [
         items: [
           { no: 25, text: 'Chimney / flue cleaned from accessible inspection covers', columns: DONE_NR_DEFECT },
           { no: 26, text: 'Flue inspection covers and doors refitted and secure', columns: DONE_NR_DEFECT },
-          {
-            no: 27,
-            text: 'Flue draught / flue-gas temperature reviewed against normal range',
-            columns: DONE_NR_DEFECT,
-          },
           { no: 28, text: 'Fuel store and delivery area checked for spillage and moisture', columns: DONE_NR_DEFECT },
         ],
       },
@@ -200,7 +189,7 @@ export const CLEANING_FORMS: CleaningForm[] = [
             columns: DONE_DEFECT,
             note: 'Pass / Fail',
           },
-          { no: 4, text: 'System pressure recorded after valve test', columns: DONE_DEFECT, note: 'bar' },
+          { no: 4, text: 'System pressure checked after valve test', columns: DONE_DEFECT },
         ],
       },
     ],
