@@ -1116,3 +1116,162 @@ textarea {
 .signed-in .text-button {
   color: #7d8a7e;
 }
+
+/* ---------- cleaning checklists ---------- */
+
+.form-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+}
+
+.form-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--card-line);
+  border-radius: 9px;
+  background: #fdfcf9;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  min-height: 76px;
+}
+
+.form-choice:hover {
+  border-color: var(--moss);
+  background: var(--moss-soft);
+}
+
+.form-choice strong {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+}
+
+.form-choice em {
+  font-style: normal;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.check-section {
+  border-top: 1px solid var(--card-line);
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+}
+
+.check-section h3 {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 0.6rem;
+}
+
+.check-item {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--card-line);
+}
+
+.check-item:last-child {
+  border-bottom: 0;
+}
+
+.check-text {
+  display: flex;
+  gap: 0.55rem;
+  align-items: baseline;
+  margin-bottom: 0.45rem;
+  line-height: 1.35;
+}
+
+.check-no {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 1.5rem;
+}
+
+.check-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin: 0 0 0.45rem 2.05rem;
+}
+
+/* Big enough to tick with a thumb on the production floor. */
+.check-box {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  min-height: 34px;
+  font-size: 0.82rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.check-box input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--moss);
+}
+
+.check-note {
+  margin-left: 2.05rem;
+  width: calc(100% - 2.05rem);
+}
+
+.check-result {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr auto;
+  gap: 0.2rem 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--card-line);
+  line-height: 1.35;
+}
+
+.check-result strong {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.check-result em {
+  grid-column: 2 / -1;
+  font-style: normal;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.check-result.flagged {
+  background: var(--rust-soft);
+}
+
+.check-result.flagged strong {
+  color: var(--rust);
+}
+
+.wide-modal {
+  width: min(720px, 100%);
+}
+
+@media (max-width: 720px) {
+  .check-boxes,
+  .check-note {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .form-picker {
+    grid-template-columns: 1fr 1fr;
+  }
+}

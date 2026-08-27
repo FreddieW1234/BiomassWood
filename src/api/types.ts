@@ -215,6 +215,10 @@ export type FuelConsumption = Timestamps & {
 
 export type CleaningEntry = Timestamps & {
   date: string
+  time: string
+  form_code: string
+  /** The ticked boxes and notes, as JSON. See lib/cleaningForms. */
+  answers: string
   staff: string
   boiler_id: number | null
   work_done: string

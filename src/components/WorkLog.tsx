@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import type { Resource } from '../api/client'
-import type { CleaningEntry } from '../api/types'
+import type { MaintenanceEntry } from '../api/types'
 import { useBoilers } from '../hooks/useBoilers'
 import { useLedger } from '../hooks/useLedger'
 import { boilerLabel, showDate, today } from '../lib/format'
@@ -21,12 +21,12 @@ const empty = () => ({
 type Props = {
   title: string
   workLabel: string
-  api: Resource<CleaningEntry>
+  api: Resource<MaintenanceEntry>
 }
 
 export function WorkLog({ title, workLabel, api }: Props) {
   const { boilers, byId } = useBoilers()
-  const ledger = useLedger<CleaningEntry, ReturnType<typeof empty>>({
+  const ledger = useLedger<MaintenanceEntry, ReturnType<typeof empty>>({
     api,
     empty,
     toForm: (e) => ({
@@ -55,7 +55,7 @@ export function WorkLog({ title, workLabel, api }: Props) {
     setFormOpen(false)
   }
 
-  const overdue = (entry: CleaningEntry) => entry.next_due !== '' && entry.next_due < today()
+  const overdue = (entry: MaintenanceEntry) => entry.next_due !== '' && entry.next_due < today()
 
   return (
     <div className="page wide">
