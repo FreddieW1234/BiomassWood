@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { cleaningApi } from '../api/client'
 import type { CleaningEntry } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
+import { MonthPicker } from '../components/MonthPicker'
 import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { useLedger } from '../hooks/useLedger'
@@ -355,7 +356,7 @@ export function Cleaning() {
           <div className="head-actions">
             <label className="toolbar-toggle">
               Month
-              <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
+              <MonthPicker value={month} onChange={setMonth} />
             </label>
             <label className="toolbar-toggle">
               Boiler
