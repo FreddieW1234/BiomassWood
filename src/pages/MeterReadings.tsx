@@ -360,15 +360,15 @@ export function MeterReadings() {
                   const suspect = step?.perDay != null && step.perDay > SUSPECT_PER_DAY
                   return (
                     <tr key={reading.id}>
-                      <td className="nowrap">{showDate(reading.date)}</td>
-                      <td className="nowrap">{boilerLabel(byId.get(reading.boiler_id))}</td>
-                      <td className="num">{figure(reading.reading)}</td>
-                      <td className="num">{step === undefined ? '—' : figure(step.delta)}</td>
-                      <td className="num">{step === undefined ? '—' : step.days}</td>
-                      <td className={`num${suspect ? ' suspect-value' : ''}`}>
+                      <td className="nowrap" data-label="Date">{showDate(reading.date)}</td>
+                      <td className="nowrap" data-label="Boiler">{boilerLabel(byId.get(reading.boiler_id))}</td>
+                      <td className="num" data-label="Reading">{figure(reading.reading)}</td>
+                      <td className="num" data-label="Change">{step === undefined ? '—' : figure(step.delta)}</td>
+                      <td className="num" data-label="Days">{step === undefined ? '—' : step.days}</td>
+                      <td className={`num${suspect ? ' suspect-value' : ''}`} data-label="Per day">
                         {step?.perDay == null ? '—' : step.perDay.toFixed(2)}
                       </td>
-                      <td className="wrap">{reading.notes || '—'}</td>
+                      <td className="wrap" data-label="Notes">{reading.notes || '—'}</td>
                       <td className="actions">
                         <button
                           type="button"

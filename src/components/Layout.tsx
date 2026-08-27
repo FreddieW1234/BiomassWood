@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useConnection } from '../context/ConnectionContext'
 
@@ -11,10 +12,39 @@ function statusKind(connected: boolean, error: string | null) {
 export function Layout() {
   const { health, lastError, lastMs, checking, ping } = useConnection()
   const { user, isAdmin, signOut } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+
+  // On a phone the menu covers the page, so close it once you have navigated.
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
   const kind = statusKind(Boolean(health?.ok), lastError)
 
   return (
-    <div className="shell">
+    <div className={`shell${menuOpen ? ' menu-open' : ''}`}>
+      <header className="topbar">
+        <button
+          type="button"
+          className="menu-button"
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{menuOpen ? '✕' : '☰'}</span>
+        </button>
+        <strong>BiomassWood</strong>
+      </header>
+
+      {menuOpen && (
+        <button
+          type="button"
+          className="menu-scrim"
+          aria-label="Close menu"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
       <aside className="sidebar">
         <div className="brand">
           <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -43,7 +73,7 @@ export function Layout() {
           <NavLink to="/fuel-suppliers">Suppliers</NavLink>
           <NavLink to="/fuel-batches">Batches</NavLink>
           <NavLink to="/fuel-deliveries">Deliveries</NavLink>
-          <NavLink to="/fuel-consumption">Usage</NavLink>
+          <NavLink to="/fuel-consumption">Filling</NavLink>
           <NavLink to="/fuel-stores">Stores</NavLink>
           <p className="nav-label">Compliance</p>
           <NavLink to="/maintenance-tasks">Tasks</NavLink>
@@ -54,6 +84,8 @@ export function Layout() {
           <p className="nav-label">Setup</p>
           <NavLink to="/sites">Sites</NavLink>
           <NavLink to="/boilers">Boilers</NavLink>
+          <NavLink to="/hoppers">Hoppers</NavLink>
+          <NavLink to="/containers">Containers</NavLink>
           {isAdmin && <NavLink to="/users">Users</NavLink>}
         </nav>
 

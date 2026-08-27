@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { boilersApi, sitesApi } from '../api/client'
+import { boilersApi, hoppersApi, sitesApi } from '../api/client'
 import type { Boiler } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
@@ -27,6 +27,7 @@ const empty = () => ({
   operator: '',
   rhi_number: '',
   serial_number_2: '',
+  hopper_id: '',
   heat_calculator: '',
   flowmeter: '',
   meter_changed_on: '',
@@ -46,6 +47,7 @@ const empty = () => ({
 
 export function Boilers() {
   const { items: sites } = useList(sitesApi)
+  const { items: hoppers } = useList(hoppersApi)
   const [showSold, setShowSold] = useState(false)
 
   return (
@@ -88,6 +90,7 @@ export function Boilers() {
         operator: b.operator,
         rhi_number: b.rhi_number,
         serial_number_2: b.serial_number_2,
+        hopper_id: idValue(b.hopper_id),
         heat_calculator: b.heat_calculator,
         flowmeter: b.flowmeter,
         meter_changed_on: b.meter_changed_on,
@@ -152,6 +155,13 @@ export function Boilers() {
         { name: 'emissions_certificate', label: 'Emissions certificate' },
         { name: 'permitted_fuels', label: 'Permitted fuels' },
         { name: 'heat_uses', label: 'Heat uses', placeholder: 'Space heating, DHW, process, drying…' },
+        {
+          name: 'hopper_id',
+          label: 'Fed by hopper',
+          kind: 'select',
+          options: hoppers.map((hopper) => ({ value: String(hopper.id), label: hopper.name })),
+          emptyLabel: 'No hopper',
+        },
         { name: 'heat_calculator', label: 'Heat calculator', width: 'half' },
         { name: 'flowmeter', label: 'Flowmeter', width: 'half' },
         { name: 'meter_changed_on', label: 'Meter changed', kind: 'date', width: 'half' },

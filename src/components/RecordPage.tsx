@@ -160,7 +160,7 @@ export function RecordPage<T extends { id: number }>({
                 {rows.map((item) => (
                   <tr key={item.id}>
                     {columns.map((column) => (
-                      <td key={column.header} className={column.className}>
+                      <td key={column.header} className={column.className} data-label={column.header}>
                         {column.cell(item)}
                       </td>
                     ))}

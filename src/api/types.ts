@@ -84,6 +84,7 @@ export type Boiler = Timestamps & {
   serial_number_2: string
   heat_calculator: string
   flowmeter: string
+  hopper_id: number | null
   meter_changed_on: string
   commissioned_on: string
   opening_reading: number
@@ -188,13 +189,27 @@ export type FuelDelivery = Timestamps & {
   notes: string
 }
 
-export type FuelConsumption = Timestamps & {
-  boiler_id: number
-  batch_id: number | null
-  store_id: number | null
-  date: string
-  quantity: number
+export type Container = Timestamps & {
+  name: string
+  size: number
   unit: string
+  notes: string
+}
+
+export type Hopper = Timestamps & {
+  name: string
+  site_id: number | null
+  location: string
+  notes: string
+}
+
+/** A filling: what went into a hopper, counted in whole containers. */
+export type FuelConsumption = Timestamps & {
+  hopper_id: number
+  date: string
+  time: string
+  quantity: number
+  container_id: number
   notes: string
 }
 

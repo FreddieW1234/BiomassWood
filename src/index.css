@@ -644,33 +644,83 @@ textarea {
 
 /* ---------- responsive ---------- */
 
+/* The top bar and drawer only exist on small screens. */
+.topbar,
+.menu-scrim {
+  display: none;
+}
+
 @media (max-width: 980px) {
   .shell {
     grid-template-columns: 1fr;
   }
 
-  .sidebar {
-    position: static;
-    height: auto;
-    gap: 1rem;
-  }
-
-  .nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .topbar {
+    display: flex;
     align-items: center;
+    gap: 0.8rem;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--forest);
+    color: var(--paper);
+    padding: 0.55rem 0.8rem;
   }
 
-  .nav-label {
-    display: none;
+  .topbar strong {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.05rem;
   }
 
-  .sidebar-foot {
+  .menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: #1c2f22;
+    color: var(--paper);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  /* Slide-out drawer rather than 20 links stacked above the page. */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: min(80vw, 300px);
+    height: 100svh;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .menu-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .menu-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    border: 0;
     padding: 0;
+    background: rgba(15, 26, 19, 0.5);
+  }
+
+  .nav a {
+    padding: 0.6rem 0.7rem;
   }
 
   .content {
-    padding: 1.2rem 1rem 2.2rem;
+    padding: 1rem 0.8rem 3rem;
   }
 
   .split,
@@ -685,6 +735,126 @@ textarea {
   .activity-text {
     grid-column: 1 / -1;
     white-space: normal;
+  }
+}
+
+@media (max-width: 720px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .page-head.with-action {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .head-actions {
+    flex-wrap: wrap;
+  }
+
+  /* Comfortable to hit with a thumb. */
+  .page-head .button,
+  .head-actions .button,
+  .form-panel .row .button {
+    min-height: 44px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* A row of a wide table is unreadable on a phone, so each becomes a card
+     with the column name beside each value. */
+  .ledger,
+  .ledger tbody,
+  .ledger tr,
+  .ledger td {
+    display: block;
+    width: 100%;
+  }
+
+  .ledger thead {
+    display: none;
+  }
+
+  .ledger tr {
+    border: 1px solid var(--card-line);
+    border-radius: 9px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .ledger tr:hover td {
+    background: none;
+  }
+
+  .ledger td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    text-align: right;
+    border: 0;
+    padding: 0.28rem 0;
+  }
+
+  .ledger td::before {
+    content: attr(data-label);
+    flex: none;
+    text-align: left;
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* Cells with nothing to say add clutter on a small screen. */
+  .ledger td:empty {
+    display: none;
+  }
+
+  .ledger td.wrap {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    gap: 0.15rem;
+  }
+
+  .ledger td.actions {
+    justify-content: flex-start;
+    gap: 1.2rem;
+    margin-top: 0.45rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--card-line);
+  }
+
+  .ledger td.actions::before {
+    content: none;
+  }
+
+  .ledger .text-button {
+    min-height: 34px;
+  }
+
+  .stat-row {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+
+  .modal {
+    padding: 0.9rem 1rem 1.1rem;
+  }
+
+  .detail-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* iOS zooms the page when a focused input is under 16px. */
+@media (max-width: 720px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
   }
 }
 

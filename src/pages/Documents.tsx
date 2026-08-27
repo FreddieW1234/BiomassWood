@@ -226,12 +226,12 @@ export function Documents() {
                 <tbody>
                   {ledger.items.map((item) => (
                     <tr key={item.id}>
-                      <td className="nowrap">{showDate(item.date)}</td>
-                      <td>{item.title || item.doc_type}</td>
-                      <td className="nowrap">
+                      <td className="nowrap" data-label="Linked to">{showDate(item.date)}</td>
+                      <td data-label="Type">{item.title || item.doc_type}</td>
+                      <td className="nowrap" data-label="Title">
                         {item.linked_resource} #{item.linked_id}
                       </td>
-                      <td className="nowrap">{item.original_filename || '—'}</td>
+                      <td className="nowrap" data-label="Date">{item.original_filename || '—'}</td>
                       <td className="actions">
                         {item.original_filename && (
                           <button

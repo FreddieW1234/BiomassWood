@@ -187,13 +187,13 @@ export function Earnings() {
                 <tbody>
                   {ledger.items.map((entry) => (
                     <tr key={entry.id}>
-                      <td className="nowrap">{showDate(entry.date)}</td>
-                      <td>{entry.scheme}</td>
-                      <td className="num strong">{money(entry.amount)}</td>
-                      <td className="nowrap">
+                      <td className="nowrap" data-label="Date">{showDate(entry.date)}</td>
+                      <td data-label="Scheme">{entry.scheme}</td>
+                      <td className="num strong" data-label="Amount">{money(entry.amount)}</td>
+                      <td className="nowrap" data-label="Boiler">
                         {entry.boiler_id === null ? '—' : boilerLabel(byId.get(entry.boiler_id))}
                       </td>
-                      <td className="wrap">{entry.notes || '—'}</td>
+                      <td className="wrap" data-label="Notes">{entry.notes || '—'}</td>
                       <td className="actions">
                         <button
                           type="button"

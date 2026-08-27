@@ -199,14 +199,14 @@ export function WorkLog({ title, workLabel, api }: Props) {
                 <tbody>
                   {ledger.items.map((entry) => (
                     <tr key={entry.id}>
-                      <td className="nowrap">{showDate(entry.date)}</td>
-                      <td className="nowrap">
+                      <td className="nowrap" data-label="Date">{showDate(entry.date)}</td>
+                      <td className="nowrap" data-label="Boiler">
                         {entry.boiler_id === null ? '—' : boilerLabel(byId.get(entry.boiler_id))}
                       </td>
-                      <td>{entry.staff}</td>
-                      <td className="wrap">{entry.work_done}</td>
-                      <td className="nowrap">{entry.duration || '—'}</td>
-                      <td className="nowrap">
+                      <td data-label="Staff">{entry.staff}</td>
+                      <td className="wrap" data-label="Work done">{entry.work_done}</td>
+                      <td className="nowrap" data-label="Took">{entry.duration || '—'}</td>
+                      <td className="nowrap" data-label="Next due">
                         {showDate(entry.next_due)}
                         {overdue(entry) && <span className="badge overdue">overdue</span>}
                       </td>

@@ -3,6 +3,7 @@ import type {
   AlertItem,
   Boiler,
   CleaningEntry,
+  Container,
   Defect,
   DeleteResponse,
   DocumentEntry,
@@ -13,6 +14,7 @@ import type {
   FuelStore,
   FuelSupplier,
   HealthResponse,
+  Hopper,
   HsInspection,
   ItemResponse,
   ListResponse,
@@ -145,6 +147,8 @@ function resource<TItem>(base: string): Resource<TItem> {
 
 export const sitesApi = resource<Site>('/api/sites')
 export const boilersApi = resource<Boiler>('/api/boilers')
+export const hoppersApi = resource<Hopper>('/api/hoppers')
+export const containersApi = resource<Container>('/api/containers')
 export const fuelStoresApi = resource<FuelStore>('/api/fuel-stores')
 export const fuelSuppliersApi = resource<FuelSupplier>('/api/fuel-suppliers')
 export const fuelBatchesApi = resource<FuelBatch>('/api/fuel-batches')

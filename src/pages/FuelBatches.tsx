@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { fuelBatchesApi, fuelConsumptionApi, fuelDeliveriesApi, fuelSuppliersApi } from '../api/client'
+import { fuelBatchesApi, fuelDeliveriesApi, fuelSuppliersApi } from '../api/client'
 import type { FuelBatch } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
 import { useList } from '../hooks/useList'
@@ -33,23 +33,16 @@ const empty = () => ({
 export function FuelBatches() {
   const { items: suppliers, byId } = useList(fuelSuppliersApi)
   const { items: deliveries } = useList(fuelDeliveriesApi)
-  const { items: consumption } = useList(fuelConsumptionApi)
 
-  const stock = useMemo(() => {
-    const map = new Map<number, { in: number; out: number }>()
+  // Filling records count containers into a hopper, not kg out of a batch, so
+  // this is what was delivered rather than a running stock figure.
+  const delivered = useMemo(() => {
+    const map = new Map<number, number>()
     for (const row of deliveries) {
-      const current = map.get(row.batch_id) || { in: 0, out: 0 }
-      current.in += row.quantity
-      map.set(row.batch_id, current)
-    }
-    for (const row of consumption) {
-      if (row.batch_id == null) continue
-      const current = map.get(row.batch_id) || { in: 0, out: 0 }
-      current.out += row.quantity
-      map.set(row.batch_id, current)
+      map.set(row.batch_id, (map.get(row.batch_id) || 0) + row.quantity)
     }
     return map
-  }, [deliveries, consumption])
+  }, [deliveries])
 
   return (
     <RecordPage<FuelBatch>
@@ -120,12 +113,11 @@ export function FuelBatches() {
         { header: 'BSL / SFR', className: 'nowrap', cell: (item) => item.bsl_sfr_number || '—' },
         { header: 'Harvest', className: 'nowrap', cell: (item) => showDate(item.harvest_from) },
         {
-          header: 'Stock',
+          header: 'Delivered',
           className: 'num',
           cell: (item) => {
-            const row = stock.get(item.id)
-            if (!row) return '—'
-            return figure(row.in - row.out)
+            const total = delivered.get(item.id)
+            return total === undefined ? '—' : figure(total)
           },
         },
       ]}

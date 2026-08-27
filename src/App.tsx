@@ -5,6 +5,7 @@ import { ConnectionProvider } from './context/ConnectionContext'
 import { Boilers } from './pages/Boilers'
 import { Cleaning } from './pages/Cleaning'
 import { Dashboard } from './pages/Dashboard'
+import { Containers } from './pages/Containers'
 import { Defects } from './pages/Defects'
 import { Documents } from './pages/Documents'
 import { Earnings } from './pages/Earnings'
@@ -13,6 +14,7 @@ import { FuelConsumptionPage } from './pages/FuelConsumption'
 import { FuelDeliveries } from './pages/FuelDeliveries'
 import { FuelStores } from './pages/FuelStores'
 import { FuelSuppliers } from './pages/FuelSuppliers'
+import { Hoppers } from './pages/Hoppers'
 import { HsInspections } from './pages/HsInspections'
 import { Maintenance } from './pages/Maintenance'
 import { MaintenanceTasks } from './pages/MaintenanceTasks'
@@ -58,6 +60,8 @@ function Gate() {
             <Route path="/fuel-deliveries" element={<FuelDeliveries />} />
             <Route path="/fuel-consumption" element={<FuelConsumptionPage />} />
             <Route path="/fuel-stores" element={<FuelStores />} />
+            <Route path="/hoppers" element={<Hoppers />} />
+            <Route path="/containers" element={<Containers />} />
             <Route path="/maintenance-templates" element={<MaintenanceTemplates />} />
             <Route path="/maintenance-tasks" element={<MaintenanceTasks />} />
             <Route path="/defects" element={<Defects />} />
