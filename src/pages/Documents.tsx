@@ -85,10 +85,6 @@ export function Documents() {
       <div className="page-head with-action">
         <div>
           <h1>Documents</h1>
-          <p>
-            Evidence files stored on the office server. Save metadata first, then the file is uploaded
-            against that row (invoices, tickets, certificates, photos).
-          </p>
         </div>
         {!formOpen && (
           <button type="button" className="button" onClick={() => setFormOpen(true)}>

@@ -134,10 +134,6 @@ export function RhiUsagePage() {
       <div className="page-head with-action">
         <div>
           <h1>RHI usage</h1>
-          <p>
-            Quarterly kWh per boiler per RHI year, with the tier-1 threshold and what is outstanding
-            against it. Click a quarter figure to load it into the form for editing.
-          </p>
         </div>
         <div className="head-actions">
           <label className="toolbar-toggle">

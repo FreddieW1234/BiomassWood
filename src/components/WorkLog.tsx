@@ -20,12 +20,11 @@ const empty = () => ({
 
 type Props = {
   title: string
-  blurb: string
   workLabel: string
   api: Resource<CleaningEntry>
 }
 
-export function WorkLog({ title, blurb, workLabel, api }: Props) {
+export function WorkLog({ title, workLabel, api }: Props) {
   const { boilers, byId } = useBoilers()
   const ledger = useLedger<CleaningEntry, ReturnType<typeof empty>>({
     api,
@@ -63,7 +62,6 @@ export function WorkLog({ title, blurb, workLabel, api }: Props) {
       <div className="page-head with-action">
         <div>
           <h1>{title}</h1>
-          <p>{blurb}</p>
         </div>
         {!formOpen && (
           <button type="button" className="button" onClick={() => setFormOpen(true)}>

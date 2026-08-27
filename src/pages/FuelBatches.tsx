@@ -54,7 +54,6 @@ export function FuelBatches() {
   return (
     <RecordPage<FuelBatch>
       title="Fuel batches"
-      blurb="One row per pellet load or chip batch. Self-supply fields stay empty for bought-in pellets. Stock is deliveries minus usage."
       tableTitle="Batches"
       api={fuelBatchesApi}
       empty={empty}

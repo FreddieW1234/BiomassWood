@@ -83,10 +83,6 @@ export function Solar() {
       <div className="page-head with-action">
         <div>
           <h1>Solar</h1>
-          <p>
-            Generation meter readings and FIT submissions for the solar system. The "generated"
-            column shows units since the previous reading.
-          </p>
         </div>
         <div className="head-actions">
           {!readingFormOpen && (

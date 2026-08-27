@@ -130,7 +130,6 @@ export function Dashboard() {
     <div className="page">
       <div className="page-head">
         <h1>Dashboard</h1>
-        <p>Live from the office server database.</p>
       </div>
 
       {error && <p className="err">{error}</p>}

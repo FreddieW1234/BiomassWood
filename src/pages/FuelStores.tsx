@@ -22,7 +22,6 @@ export function FuelStores() {
   return (
     <RecordPage<FuelStore>
       title="Fuel stores"
-      blurb="Silos, bunkers, barns and bays. Deliveries and usage can point at a store."
       tableTitle="Stores"
       api={fuelStoresApi}
       empty={empty}

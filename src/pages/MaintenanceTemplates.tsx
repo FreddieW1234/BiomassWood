@@ -16,7 +16,6 @@ export function MaintenanceTemplates() {
   return (
     <RecordPage<MaintenanceTemplate>
       title="Maintenance templates"
-      blurb="Manufacturer schedules as data, not hardcoded screens. Add FACI, Moretti Camini and Ala-Talkkari Veto rows here."
       tableTitle="Templates"
       api={maintenanceTemplatesApi}
       empty={empty}

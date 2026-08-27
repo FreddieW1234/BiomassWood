@@ -24,7 +24,6 @@ export function MaintenanceTasks() {
   return (
     <RecordPage<MaintenanceTask>
       title="Maintenance tasks"
-      blurb="Due work per boiler. When it is done, log the visit on Maintenance and link it here with the record id."
       tableTitle="Tasks"
       api={maintenanceTasksApi}
       empty={empty}

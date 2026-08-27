@@ -8,7 +8,6 @@ export function FuelSuppliers() {
   return (
     <RecordPage<FuelSupplier>
       title="Fuel suppliers"
-      blurb="Who you buy pellets or roundwood from, including BSL or SFR numbers."
       tableTitle="Suppliers"
       api={fuelSuppliersApi}
       empty={empty}

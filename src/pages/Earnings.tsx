@@ -62,7 +62,6 @@ export function Earnings() {
       <div className="page-head with-action">
         <div>
           <h1>Earnings</h1>
-          <p>Income from grant and energy tariff schemes (RHI and similar), payment by payment.</p>
         </div>
         {!formOpen && (
           <button type="button" className="button" onClick={() => setFormOpen(true)}>

@@ -21,7 +21,6 @@ export function Defects() {
   return (
     <RecordPage<Defect>
       title="Defects"
-      blurb="Faults and corrective work per boiler."
       tableTitle="Defects"
       api={defectsApi}
       empty={empty}

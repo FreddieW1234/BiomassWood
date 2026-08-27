@@ -51,7 +51,6 @@ export function Boilers() {
   return (
     <RecordPage<Boiler>
       title="Boilers"
-      blurb="Master register. Cleaning, fuel, readings and tasks all point at these rows. Status stays on the boiler when it is sold or archived."
       tableTitle="Register"
       api={boilersApi}
       transformItems={(items) =>

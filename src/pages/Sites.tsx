@@ -8,7 +8,6 @@ export function Sites() {
   return (
     <RecordPage<Site>
       title="Sites"
-      blurb="Places where boilers and fuel stores sit. Add a site first if you want boilers grouped by location."
       tableTitle="Sites"
       api={sitesApi}
       empty={empty}

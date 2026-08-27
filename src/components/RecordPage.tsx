@@ -26,7 +26,6 @@ export type RecordColumn<T> = {
 
 type Props<T extends { id: number }> = {
   title: string
-  blurb: string
   tableTitle?: string
   api: Resource<T>
   empty: () => Record<string, string>
@@ -42,7 +41,6 @@ type Props<T extends { id: number }> = {
 
 export function RecordPage<T extends { id: number }>({
   title,
-  blurb,
   tableTitle = 'Records',
   api,
   empty,
@@ -79,7 +77,6 @@ export function RecordPage<T extends { id: number }>({
       <div className="page-head with-action">
         <div>
           <h1>{title}</h1>
-          <p>{blurb}</p>
         </div>
         <div className="head-actions">
           {toolbar}

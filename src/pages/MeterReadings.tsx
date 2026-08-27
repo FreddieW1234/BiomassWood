@@ -6,11 +6,13 @@ import { useBoilers } from '../hooks/useBoilers'
 import { useLedger } from '../hooks/useLedger'
 import { boilerLabel, figure, showDate, today } from '../lib/format'
 
+const DEFAULT_READER = 'Tony'
+
 const empty = () => ({
   date: today(),
   boiler_id: '',
   reading: '',
-  staff: '',
+  staff: DEFAULT_READER,
   notes: '',
   reading_at: '',
 })
@@ -120,7 +122,12 @@ export function MeterReadings() {
       if (existing) {
         await meterReadingsApi.update(existing.id, { reading: value })
       } else {
-        await meterReadingsApi.create({ date: cell.date, boiler_id: cell.boilerId, reading: value })
+        await meterReadingsApi.create({
+          date: cell.date,
+          boiler_id: cell.boilerId,
+          reading: value,
+          staff: DEFAULT_READER,
+        })
       }
       await ledger.refresh()
       setCell(null)
@@ -147,11 +154,6 @@ export function MeterReadings() {
       <div className="page-head with-action">
         <div>
           <h1>Meter readings</h1>
-          <p>
-            Boilers down the side, reading dates across the top. Double-click any cell to change
-            the number, or an empty one to add a reading. Readings that imply more than{' '}
-            {SUSPECT_PER_DAY} per day since the previous one are flagged red as likely typos.
-          </p>
         </div>
         <div className="head-actions">
           <div className="view-switch">
@@ -258,13 +260,6 @@ export function MeterReadings() {
       )}
 
       <section className="card">
-        <div className="card-head">
-          <h2>{view === 'grid' ? 'Readings grid' : 'Readings'}</h2>
-          <span className="count">
-            {ledger.items.length}
-            {view === 'grid' ? ` · ${gridBoilers.length} boilers × ${dates.length} dates` : ''}
-          </span>
-        </div>
         {cellError && <p className="err">{cellError}</p>}
         {ledger.loading ? (
           <p className="muted">Loading…</p>

@@ -33,7 +33,6 @@ export function FuelDeliveries() {
   return (
     <RecordPage<FuelDelivery>
       title="Fuel deliveries"
-      blurb="Receipts into a store. Attach invoices and tickets on the Documents page after you save the row."
       tableTitle="Deliveries"
       api={fuelDeliveriesApi}
       empty={empty}

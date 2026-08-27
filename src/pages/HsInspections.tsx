@@ -23,7 +23,6 @@ export function HsInspections() {
   return (
     <RecordPage<HsInspection>
       title="H&S inspections"
-      blurb="Site or boiler inspections. Failed and overdue rows appear on the dashboard."
       tableTitle="Inspections"
       api={hsInspectionsApi}
       empty={empty}

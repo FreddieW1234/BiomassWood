@@ -23,7 +23,6 @@ export function FuelConsumptionPage() {
   return (
     <RecordPage<FuelConsumption>
       title="Fuel usage"
-      blurb="Quantity taken from a store or batch into a boiler. Stock on the Batches page is deliveries minus these rows."
       tableTitle="Usage"
       api={fuelConsumptionApi}
       empty={empty}
