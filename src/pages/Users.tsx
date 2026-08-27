@@ -39,9 +39,9 @@ export function Users() {
         fields={[
           {
             name: 'username',
-            label: 'Username',
+            label: 'Username or email',
             required: true,
-            placeholder: 'letters, numbers, dot, dash',
+            placeholder: 'e.g. tony@michton.com',
             width: 'half',
           },
           { name: 'display_name', label: 'Full name', width: 'half' },
