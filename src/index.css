@@ -205,6 +205,11 @@ p {
   max-width: none;
 }
 
+/* A page rendered below another needs the same gap the page uses internally. */
+.page + .page {
+  margin-top: 1.2rem;
+}
+
 .page-head p {
   max-width: 46rem;
   color: var(--ink-soft);

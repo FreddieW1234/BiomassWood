@@ -92,7 +92,7 @@ export function Users() {
         }}
       />
 
-      <div className="page wide" style={{ marginTop: '-0.5rem' }}>
+      <div className="page wide">
         <ChangeOwnPassword username={user?.username ?? ''} />
       </div>
     </>
