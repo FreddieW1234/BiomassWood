@@ -59,34 +59,45 @@ export function Layout() {
         </div>
 
         <nav className="nav">
-          <NavLink to="/" end>
-            Dashboard
-          </NavLink>
-          <p className="nav-label">Records</p>
-          <NavLink to="/cleaning">Cleaning</NavLink>
-          <NavLink to="/maintenance">Maintenance</NavLink>
-          <NavLink to="/meter-readings">Meter readings</NavLink>
-          <NavLink to="/rhi-usage">RHI usage</NavLink>
-          <NavLink to="/earnings">Earnings</NavLink>
-          <NavLink to="/solar">Solar</NavLink>
-          <p className="nav-label">Fuel</p>
-          <NavLink to="/fuel-suppliers">Suppliers</NavLink>
-          <NavLink to="/fuel-batches">Batches</NavLink>
-          <NavLink to="/fuel-deliveries">Deliveries</NavLink>
-          <NavLink to="/fuel-consumption">Filling</NavLink>
-          <NavLink to="/fuel-stores">Stores</NavLink>
-          <p className="nav-label">Compliance</p>
-          <NavLink to="/maintenance-tasks">Tasks</NavLink>
-          <NavLink to="/maintenance-templates">Templates</NavLink>
-          <NavLink to="/defects">Defects</NavLink>
-          <NavLink to="/hs-inspections">H&S</NavLink>
-          <NavLink to="/documents">Documents</NavLink>
-          <p className="nav-label">Setup</p>
-          <NavLink to="/sites">Sites</NavLink>
-          <NavLink to="/boilers">Boilers</NavLink>
-          <NavLink to="/hoppers">Hoppers</NavLink>
-          <NavLink to="/containers">Containers</NavLink>
-          {isAdmin && <NavLink to="/users">Users</NavLink>}
+          {isAdmin ? (
+            <>
+              <NavLink to="/" end>
+                Dashboard
+              </NavLink>
+              <p className="nav-label">Records</p>
+              <NavLink to="/cleaning">Cleaning</NavLink>
+              <NavLink to="/maintenance">Maintenance</NavLink>
+              <NavLink to="/meter-readings">Meter readings</NavLink>
+              <NavLink to="/rhi-usage">RHI usage</NavLink>
+              <NavLink to="/earnings">Earnings</NavLink>
+              <NavLink to="/solar">Solar</NavLink>
+              <p className="nav-label">Fuel</p>
+              <NavLink to="/fuel-suppliers">Suppliers</NavLink>
+              <NavLink to="/fuel-batches">Batches</NavLink>
+              <NavLink to="/fuel-deliveries">Deliveries</NavLink>
+              <NavLink to="/fuel-consumption">Filling</NavLink>
+              <NavLink to="/fuel-stores">Stores</NavLink>
+              <p className="nav-label">Compliance</p>
+              <NavLink to="/maintenance-tasks">Tasks</NavLink>
+              <NavLink to="/maintenance-templates">Templates</NavLink>
+              <NavLink to="/defects">Defects</NavLink>
+              <NavLink to="/hs-inspections">H&S</NavLink>
+              <NavLink to="/documents">Documents</NavLink>
+              <p className="nav-label">Setup</p>
+              <NavLink to="/sites">Sites</NavLink>
+              <NavLink to="/boilers">Boilers</NavLink>
+              <NavLink to="/hoppers">Hoppers</NavLink>
+              <NavLink to="/containers">Containers</NavLink>
+              <NavLink to="/users">Users</NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/cleaning">Cleaning</NavLink>
+              <NavLink to="/maintenance">Maintenance</NavLink>
+              <NavLink to="/meter-readings">Meter readings</NavLink>
+              <NavLink to="/fuel-consumption">Filling</NavLink>
+            </>
+          )}
         </nav>
 
         <div className="sidebar-foot">

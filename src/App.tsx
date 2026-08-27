@@ -46,29 +46,34 @@ function Gate() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/boilers" element={<Boilers />} />
-            <Route path="/sites" element={<Sites />} />
             <Route path="/cleaning" element={<Cleaning />} />
             <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/meter-readings" element={<MeterReadings />} />
-            <Route path="/rhi-usage" element={<RhiUsagePage />} />
-            <Route path="/earnings" element={<Earnings />} />
-            <Route path="/solar" element={<Solar />} />
-            <Route path="/fuel-suppliers" element={<FuelSuppliers />} />
-            <Route path="/fuel-batches" element={<FuelBatches />} />
-            <Route path="/fuel-deliveries" element={<FuelDeliveries />} />
             <Route path="/fuel-consumption" element={<FuelConsumptionPage />} />
-            <Route path="/fuel-stores" element={<FuelStores />} />
-            <Route path="/hoppers" element={<Hoppers />} />
-            <Route path="/containers" element={<Containers />} />
-            <Route path="/maintenance-templates" element={<MaintenanceTemplates />} />
-            <Route path="/maintenance-tasks" element={<MaintenanceTasks />} />
-            <Route path="/defects" element={<Defects />} />
-            <Route path="/hs-inspections" element={<HsInspections />} />
-            <Route path="/documents" element={<Documents />} />
-            {isAdmin && <Route path="/users" element={<Users />} />}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {isAdmin && (
+              <>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/boilers" element={<Boilers />} />
+                <Route path="/sites" element={<Sites />} />
+                <Route path="/rhi-usage" element={<RhiUsagePage />} />
+                <Route path="/earnings" element={<Earnings />} />
+                <Route path="/solar" element={<Solar />} />
+                <Route path="/fuel-suppliers" element={<FuelSuppliers />} />
+                <Route path="/fuel-batches" element={<FuelBatches />} />
+                <Route path="/fuel-deliveries" element={<FuelDeliveries />} />
+                <Route path="/fuel-stores" element={<FuelStores />} />
+                <Route path="/hoppers" element={<Hoppers />} />
+                <Route path="/containers" element={<Containers />} />
+                <Route path="/maintenance-templates" element={<MaintenanceTemplates />} />
+                <Route path="/maintenance-tasks" element={<MaintenanceTasks />} />
+                <Route path="/defects" element={<Defects />} />
+                <Route path="/hs-inspections" element={<HsInspections />} />
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/users" element={<Users />} />
+              </>
+            )}
+            {/* Staff have no dashboard, so their home is the cleaning log. */}
+            <Route path="*" element={<Navigate to={isAdmin ? '/' : '/cleaning'} replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
