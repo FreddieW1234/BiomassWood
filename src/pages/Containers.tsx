@@ -35,7 +35,7 @@ export function Containers() {
   return (
     <>
       <RecordPage<Container>
-        title="Containers"
+        title="Containers To Fill Hoppers"
         tableTitle="Containers"
         api={containersApi}
         empty={empty}

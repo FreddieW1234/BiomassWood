@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { cleaningApi } from '../api/client'
 import type { CleaningEntry } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
+import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { useLedger } from '../hooks/useLedger'
 import { boilerLabel, nearestHour, showDate, today } from '../lib/format'
@@ -42,6 +43,9 @@ function addDays(days: number) {
 
 export function Cleaning() {
   const { boilers, byId } = useBoilers()
+  const { user } = useAuth()
+  // Whoever is signed in is doing the check; their name, not their login.
+  const operatorName = user?.display_name?.trim() || user?.username || ''
   const ledger = useLedger<CleaningEntry, ReturnType<typeof empty>>({
     api: cleaningApi,
     empty,
@@ -76,6 +80,7 @@ export function Cleaning() {
     ledger.setField('form_code', code)
     ledger.setField('date', today())
     ledger.setField('time', nearestHour())
+    ledger.setField('staff', operatorName)
     if (definition) ledger.setField('next_due', addDays(definition.intervalDays))
     setFormOpen(true)
   }
