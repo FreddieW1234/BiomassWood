@@ -19,13 +19,23 @@ import type {
   MaintenanceEntry,
   MaintenanceTask,
   MaintenanceTemplate,
+  LoginResponse,
+  ManagedUser,
   MeterReading,
   RhiUsage,
   RhiYear,
   Site,
   SolarReading,
   SolarSubmission,
+  AuthUser,
 } from './types'
+
+// The signed-in user's session token. Held in memory; AuthContext persists it.
+let authToken = ''
+
+export function setAuthToken(token: string) {
+  authToken = token
+}
 
 export class ApiError extends Error {
   status: number
@@ -62,7 +72,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
   if (!headers.has('Content-Type') && init.body && !(init.body instanceof ArrayBuffer) && !(init.body instanceof Blob)) {
     headers.set('Content-Type', 'application/json')
   }
-  if (apiKey && path !== '/api/health') {
+  if (authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`)
+  } else if (apiKey && path !== '/api/health') {
+    // Only used before sign-in exists on a server that still expects the key.
     headers.set('X-API-Key', apiKey)
   }
 
@@ -151,6 +164,30 @@ export const rhiUsageApi = resource<RhiUsage>('/api/rhi-usage')
 export const solarReadingsApi = resource<SolarReading>('/api/solar-readings')
 export const solarSubmissionsApi = resource<SolarSubmission>('/api/solar-submissions')
 
+export const usersApi = resource<ManagedUser>('/api/users')
+
+export function login(username: string, password: string) {
+  return request<LoginResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  })
+}
+
+export function logout() {
+  return request<{ ok: boolean }>('/api/auth/logout', { method: 'POST' })
+}
+
+export function getCurrentUser() {
+  return request<{ user: AuthUser }>('/api/auth/me')
+}
+
+export function changeOwnPassword(currentPassword: string, newPassword: string) {
+  return request<{ ok: boolean; token: string }>('/api/auth/password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  })
+}
+
 export function listResource(slug: string) {
   return request<ListResponse<Record<string, unknown>>>(`/api/${slug}`)
 }
@@ -173,7 +210,8 @@ export async function downloadDocumentFile(id: number, filename: string) {
     throw new ApiError('No API URL configured in this build.', 0, `/api/documents/${id}/file`)
   }
   const headers = new Headers()
-  if (apiKey) headers.set('X-API-Key', apiKey)
+  if (authToken) headers.set('Authorization', `Bearer ${authToken}`)
+  else if (apiKey) headers.set('X-API-Key', apiKey)
   const path = `/api/documents/${id}/file`
   let response: Response
   try {
@@ -208,7 +246,8 @@ export async function documentObjectUrl(id: number) {
   const path = `/api/documents/${id}/file`
   if (!apiUrl) throw new ApiError('No API URL configured in this build.', 0, path)
   const headers = new Headers()
-  if (apiKey) headers.set('X-API-Key', apiKey)
+  if (authToken) headers.set('Authorization', `Bearer ${authToken}`)
+  else if (apiKey) headers.set('X-API-Key', apiKey)
   let response: Response
   try {
     response = await fetch(joinUrl(apiUrl, path), { headers })

@@ -25,6 +25,22 @@ export type HealthResponse = {
   'solar-submissionsCount'?: number
 }
 
+export type AuthUser = {
+  id: number
+  username: string
+  display_name: string
+  role: 'admin' | 'staff'
+}
+
+export type ManagedUser = AuthUser & {
+  active: boolean
+  last_login_at: string
+  created_at: string
+  updated_at: string
+}
+
+export type LoginResponse = { token: string; expires_at: string; user: AuthUser }
+
 export type AlertItem = {
   kind: string
   resource: string

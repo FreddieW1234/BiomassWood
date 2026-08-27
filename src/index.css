@@ -878,3 +878,63 @@ textarea {
 .upload-button input {
   display: none;
 }
+
+.form-image {
+  border-top: 1px solid var(--card-line);
+  padding-top: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.store-image.thumb {
+  max-height: 150px;
+  width: auto;
+  max-width: 100%;
+  margin-bottom: 0.7rem;
+}
+
+/* ---------- sign in ---------- */
+
+.signin-page {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: var(--bg);
+}
+
+.signin-card {
+  width: min(360px, 100%);
+}
+
+.signin-brand {
+  color: var(--forest);
+  margin-bottom: 1.4rem;
+  padding: 0;
+}
+
+.signin-brand strong {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.signin-card .button {
+  width: 100%;
+  justify-content: center;
+}
+
+.signed-in {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.84rem;
+  color: #a9b6a9;
+}
+
+.signed-in .text-button {
+  color: #7d8a7e;
+}

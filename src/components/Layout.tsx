@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useConnection } from '../context/ConnectionContext'
 
 function statusKind(connected: boolean, error: string | null) {
@@ -9,6 +10,7 @@ function statusKind(connected: boolean, error: string | null) {
 
 export function Layout() {
   const { health, lastError, lastMs, checking, ping } = useConnection()
+  const { user, isAdmin, signOut } = useAuth()
   const kind = statusKind(Boolean(health?.ok), lastError)
 
   return (
@@ -52,9 +54,16 @@ export function Layout() {
           <p className="nav-label">Setup</p>
           <NavLink to="/sites">Sites</NavLink>
           <NavLink to="/boilers">Boilers</NavLink>
+          {isAdmin && <NavLink to="/users">Users</NavLink>}
         </nav>
 
         <div className="sidebar-foot">
+          <div className="signed-in">
+            <span>{user?.display_name || user?.username}</span>
+            <button type="button" className="text-button" onClick={() => void signOut()}>
+              Sign out
+            </button>
+          </div>
           <button
             type="button"
             className={`status-pill status-${kind}`}

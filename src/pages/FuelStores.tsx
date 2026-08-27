@@ -33,6 +33,19 @@ export function FuelStores() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // An image picked in the form: uploaded once the row is saved, so it works
+  // for a brand-new store as well as an edit.
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null)
+
+  function choosePending(file: File | null) {
+    setPendingPreview((previous) => {
+      if (previous) URL.revokeObjectURL(previous)
+      return file ? URL.createObjectURL(file) : null
+    })
+    setPendingFile(file)
+  }
+
   const loadPhotos = useCallback(async () => {
     try {
       const result = await documentsApi.list()
@@ -178,6 +191,50 @@ export function FuelStores() {
             View
           </button>
         )}
+        formExtras={(editing) => (
+          <div className="form-image">
+            {pendingPreview ? (
+              <img className="store-image thumb" src={pendingPreview} alt="Chosen image" />
+            ) : editing && photos.has(editing.id) ? (
+              <p className="muted">An image is already attached. Choose a file to replace it.</p>
+            ) : (
+              <p className="muted">No image attached.</p>
+            )}
+            <div className="row">
+              <label className="upload-button">
+                {pendingFile ? 'Choose a different image' : 'Choose image'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    choosePending(event.target.files?.[0] ?? null)
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+              {pendingFile && (
+                <button type="button" className="button ghost" onClick={() => choosePending(null)}>
+                  Clear
+                </button>
+              )}
+              {!pendingFile && editing && photos.has(editing.id) && (
+                <button
+                  type="button"
+                  className="button ghost"
+                  disabled={busy}
+                  onClick={() => void removePhoto(editing)}
+                >
+                  Remove image
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        onSaved={async (store) => {
+          if (!pendingFile) return
+          await attach(store, pendingFile)
+          choosePending(null)
+        }}
       />
 
       {viewing && (

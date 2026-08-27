@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConnectionProvider } from './context/ConnectionContext'
 import { Boilers } from './pages/Boilers'
 import { Cleaning } from './pages/Cleaning'
@@ -18,12 +19,28 @@ import { MaintenanceTasks } from './pages/MaintenanceTasks'
 import { MaintenanceTemplates } from './pages/MaintenanceTemplates'
 import { MeterReadings } from './pages/MeterReadings'
 import { RhiUsagePage } from './pages/RhiUsage'
+import { SignIn } from './pages/SignIn'
 import { Sites } from './pages/Sites'
+import { Users } from './pages/Users'
 import { Solar } from './pages/Solar'
 
 export default function App() {
   return (
-    <ConnectionProvider>
+    <AuthProvider>
+      <ConnectionProvider>
+        <Gate />
+      </ConnectionProvider>
+    </AuthProvider>
+  )
+}
+
+function Gate() {
+  const { user, ready, isAdmin } = useAuth()
+
+  if (!ready) return <div className="signin-page"><p className="muted">Loading…</p></div>
+  if (!user) return <SignIn />
+
+  return (
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -46,10 +63,10 @@ export default function App() {
             <Route path="/defects" element={<Defects />} />
             <Route path="/hs-inspections" element={<HsInspections />} />
             <Route path="/documents" element={<Documents />} />
+            {isAdmin && <Route path="/users" element={<Users />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
-    </ConnectionProvider>
   )
 }

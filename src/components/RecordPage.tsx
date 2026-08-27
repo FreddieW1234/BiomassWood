@@ -39,6 +39,12 @@ type Props<T extends { id: number }> = {
   toolbar?: ReactNode
   /** Extra buttons at the start of each row's actions cell. */
   rowActions?: (item: T) => ReactNode
+  /** Extra controls inside the form, below the fields. */
+  formExtras?: (editing: T | null) => ReactNode
+  /** Called with the saved row, so a page can attach files afterwards. */
+  onSaved?: (item: T) => void | Promise<void>
+  /** Convert form strings into the shape the API expects. */
+  toPayload?: (form: Record<string, string>) => Record<string, unknown>
 }
 
 export function RecordPage<T extends { id: number }>({
@@ -53,8 +59,11 @@ export function RecordPage<T extends { id: number }>({
   transformItems,
   toolbar,
   rowActions,
+  formExtras,
+  onSaved,
+  toPayload,
 }: Props<T>) {
-  const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm })
+  const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm, toPayload })
   const [formOpen, setFormOpen] = useState(false)
   const rows = transformItems ? transformItems(ledger.items) : ledger.items
   const editing = ledger.items.find((item) => item.id === ledger.editingId)
@@ -62,7 +71,9 @@ export function RecordPage<T extends { id: number }>({
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     const saved = await ledger.submit()
-    if (saved) setFormOpen(false)
+    if (!saved) return
+    await onSaved?.(saved)
+    setFormOpen(false)
   }
 
   function close() {
@@ -109,6 +120,7 @@ export function RecordPage<T extends { id: number }>({
               />
             ))}
           </div>
+          {formExtras?.(editing ?? null)}
           <div className="row">
             <button type="submit" className="button" disabled={ledger.saving}>
               {ledger.editingId ? 'Save changes' : 'Add record'}
