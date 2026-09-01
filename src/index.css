@@ -1499,8 +1499,9 @@ textarea {
 
 /* Clicking a boiler number or a date picks that line out and keeps it picked
    until it is clicked again, so a row can be followed across sixty columns
-   without losing it. Several can be lit at once to compare two boilers.
-   The column being edited keeps its own green, so :not(.round-col). */
+   without losing it. One row and one column at a time; clicking another moves
+   the highlight. The column being edited keeps its own green, hence
+   :not(.round-col). */
 .grid-table tbody tr.lit-row td,
 .grid-table tbody tr.lit-row .boiler-col,
 .grid-table td.lit-col:not(.round-col),
