@@ -25,7 +25,7 @@ function shortDate(iso: string) {
 type Cell = { boilerId: number; date: string }
 
 export function MeterReadings() {
-  const { boilers, byId } = useBoilers()
+  const { boilers: allBoilers, visible: boilers, byId } = useBoilers()
   const ledger = useLedger<MeterReading, ReturnType<typeof empty>>({
     api: meterReadingsApi,
     empty,
@@ -209,7 +209,7 @@ export function MeterReadings() {
             <label>
               Boiler
               <BoilerSelect
-                boilers={boilers}
+                boilers={allBoilers}
                 value={ledger.form.boiler_id}
                 onChange={(value) => ledger.setField('boiler_id', value)}
                 required

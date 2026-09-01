@@ -153,6 +153,38 @@ p {
   padding: 0 0.4rem;
 }
 
+/* Sits above the signed-in name, separated from it so it reads as a switch on
+   the app rather than something to do with the account. */
+.sold-switch {
+  display: flex;
+  /* The base label rule stacks its contents; this one reads as a single line. */
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--forest-line);
+  font: 500 0.84rem var(--sans);
+  letter-spacing: normal;
+  text-transform: none;
+  color: #a9b6a9;
+  cursor: pointer;
+}
+
+.sold-switch:hover {
+  color: var(--paper);
+}
+
+.sold-switch input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  accent-color: var(--moss);
+  cursor: pointer;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

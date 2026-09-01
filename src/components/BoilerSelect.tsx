@@ -1,4 +1,5 @@
 import type { Boiler } from '../api/types'
+import { useSoldBoilers } from '../context/SoldBoilersContext'
 
 type Props = {
   boilers: Boiler[]
@@ -12,6 +13,13 @@ export function isSold(boiler: Boiler) {
 }
 
 export function BoilerSelect({ boilers, value, onChange, required }: Props) {
+  const { showSold } = useSoldBoilers()
+  // Hiding sold boilers must never hide the one a record already points at,
+  // or editing an old entry would silently change which boiler it belongs to.
+  const listed = showSold
+    ? boilers
+    : boilers.filter((boiler) => !isSold(boiler) || String(boiler.id) === value)
+
   return (
     <select
       className="boiler-select"
@@ -20,7 +28,7 @@ export function BoilerSelect({ boilers, value, onChange, required }: Props) {
       required={required}
     >
       <option value="">{required ? 'Select a boiler…' : 'Not boiler-specific'}</option>
-      {boilers.map((boiler) => {
+      {listed.map((boiler) => {
         const sold = isSold(boiler)
         const detail = [`No. ${boiler.number}`, boiler.type, boiler.location].filter(Boolean).join(' · ')
         return (

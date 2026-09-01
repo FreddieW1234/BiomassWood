@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useConnection } from '../context/ConnectionContext'
+import { useSoldBoilers } from '../context/SoldBoilersContext'
 
 function statusKind(connected: boolean, error: string | null) {
   if (error) return 'down'
@@ -12,6 +13,7 @@ function statusKind(connected: boolean, error: string | null) {
 export function Layout() {
   const { health, lastError, lastMs, checking, ping } = useConnection()
   const { user, isAdmin, signOut } = useAuth()
+  const { showSold, setShowSold } = useSoldBoilers()
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
 
@@ -100,6 +102,17 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-foot">
+          {/* Sold boilers are most of the register and none of the day job, so
+              this is a switch on the whole app rather than one page's filter. */}
+          <label className="sold-switch">
+            <input
+              type="checkbox"
+              checked={showSold}
+              onChange={(event) => setShowSold(event.target.checked)}
+            />
+            Show sold boilers
+          </label>
+
           <div className="signed-in">
             <span>{user?.display_name || user?.username}</span>
             <button type="button" className="text-button" onClick={() => void signOut()}>

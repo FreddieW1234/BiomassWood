@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { boilersApi, hoppersApi, sitesApi } from '../api/client'
 import type { Boiler } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
+import { useSoldBoilers } from '../context/SoldBoilersContext'
 import { useList } from '../hooks/useList'
 import { idValue, sortBoilers } from '../lib/format'
 import { BOILER_STATUSES, FUEL_TYPES, MANUFACTURERS, fuelLabel, statusLabel } from '../lib/options'
@@ -48,7 +48,8 @@ const empty = () => ({
 export function Boilers() {
   const { items: sites } = useList(sitesApi)
   const { items: hoppers } = useList(hoppersApi)
-  const [showSold, setShowSold] = useState(false)
+  // Sold boilers are switched on and off for the whole app from the sidebar.
+  const { showSold } = useSoldBoilers()
 
   return (
     <RecordPage<Boiler>
@@ -57,16 +58,6 @@ export function Boilers() {
       api={boilersApi}
       transformItems={(items) =>
         sortBoilers(showSold ? items : items.filter((b) => b.status !== 'SOLD_TRANSFERRED'))
-      }
-      toolbar={
-        <label className="toolbar-toggle">
-          <input
-            type="checkbox"
-            checked={showSold}
-            onChange={(event) => setShowSold(event.target.checked)}
-          />
-          Show sold boilers
-        </label>
       }
       empty={empty}
       toForm={(b) => ({

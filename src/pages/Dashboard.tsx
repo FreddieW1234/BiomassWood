@@ -22,7 +22,7 @@ type ActivityItem = {
 }
 
 export function Dashboard() {
-  const { boilers, byId } = useBoilers()
+  const { visible: boilers, byId } = useBoilers()
   const [cleaning, setCleaning] = useState<CleaningEntry[]>([])
   const [maintenance, setMaintenance] = useState<MaintenanceEntry[]>([])
   const [readings, setReadings] = useState<MeterReading[]>([])

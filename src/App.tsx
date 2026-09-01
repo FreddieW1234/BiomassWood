@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConnectionProvider } from './context/ConnectionContext'
+import { SoldBoilersProvider } from './context/SoldBoilersContext'
 import { Boilers } from './pages/Boilers'
 import { Cleaning } from './pages/Cleaning'
 import { Dashboard } from './pages/Dashboard'
@@ -30,7 +31,9 @@ export default function App() {
   return (
     <AuthProvider>
       <ConnectionProvider>
-        <Gate />
+        <SoldBoilersProvider>
+          <Gate />
+        </SoldBoilersProvider>
       </ConnectionProvider>
     </AuthProvider>
   )
