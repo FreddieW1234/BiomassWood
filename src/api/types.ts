@@ -227,6 +227,29 @@ export type CleaningEntry = Timestamps & {
   parts: string
   engineer: string
   outcome: string
+  /** Free text about the check as a whole, rather than any one item. */
+  notes: string
+}
+
+/** One check a boiler needs on a given day, from /api/cleaning-due. */
+export type CleaningDueItem = {
+  boiler_id: number
+  number: string
+  type: string
+  location: string
+  form_code: string
+  interval_days: number
+  last_date: string
+  next_due: string
+  overdue: boolean
+  /** Set once the check has been recorded that day. */
+  recorded_id: number | null
+  recorded_notes: string
+}
+
+export type CleaningDueResponse = {
+  date: string
+  items: CleaningDueItem[]
 }
 
 export type MaintenanceEntry = Timestamps & {

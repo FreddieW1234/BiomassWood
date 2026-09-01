@@ -70,7 +70,6 @@ export const CLEANING_FORMS: CleaningForm[] = [
         default: 'Low',
       },
       { name: 'alarm_code', label: 'Alarm or fault code', default: 'None' },
-      { name: 'action_required', label: 'Action required', kind: 'textarea', default: 'None' },
       {
         name: 'action_completed',
         label: 'Action completed',
@@ -306,6 +305,16 @@ export const CLEANING_FORMS: CleaningForm[] = [
   },
 ]
 
+/**
+ * Extras that a form used to carry and that older records still hold. The
+ * viewer falls back to these so history stays readable when a form changes --
+ * "action required" became the record-level Notes box, but tens of thousands
+ * of saved checks still have a value under the old name.
+ */
+export const RETIRED_EXTRA_LABELS: Record<string, string> = {
+  action_required: 'Action required',
+}
+
 export const COLUMN_LABELS: Record<CheckColumn, string> = {
   done: 'Done',
   not_required: 'N/R',
@@ -337,6 +346,22 @@ export function startingAnswers(form: CleaningForm | undefined): CleaningAnswers
     if (extra.default) extras[extra.name] = extra.default
   }
   return { items: {}, extras }
+}
+
+/**
+ * Every item ticked with its first column -- 'done' on C1-C6, 'pass' on C7 --
+ * which is what a clean, uneventful check looks like. The day's round records a
+ * whole form from one tap, so this is what that tap fills in.
+ */
+export function completedAnswers(form: CleaningForm | undefined): CleaningAnswers {
+  const answers = startingAnswers(form)
+  for (const section of form?.sections ?? []) {
+    for (const item of section.items) {
+      const column = item.columns[0]
+      if (column) answers.items[String(item.no)] = { [column]: true }
+    }
+  }
+  return answers
 }
 
 export function parseAnswers(raw: string): CleaningAnswers {

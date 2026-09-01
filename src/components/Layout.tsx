@@ -94,7 +94,6 @@ export function Layout() {
             <>
               <NavLink to="/cleaning">Cleaning</NavLink>
               <NavLink to="/maintenance">Maintenance</NavLink>
-              <NavLink to="/meter-readings">Meter readings</NavLink>
               <NavLink to="/fuel-consumption">Filling</NavLink>
             </>
           )}

@@ -1,15 +1,17 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { cleaningApi } from '../api/client'
-import type { CleaningEntry } from '../api/types'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { cleaningApi, getCleaningDue } from '../api/client'
+import type { CleaningDueItem, CleaningEntry } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
 import { MonthPicker } from '../components/MonthPicker'
 import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { useLedger } from '../hooks/useLedger'
-import { boilerLabel, nearestHour, showDate, today } from '../lib/format'
+import { addDaysTo, boilerLabel, clockTime, nearestHour, showDate, today } from '../lib/format'
 import {
   CLEANING_FORMS,
   COLUMN_LABELS,
+  RETIRED_EXTRA_LABELS,
+  completedAnswers,
   countAnswered,
   countItems,
   defectItems,
@@ -34,6 +36,7 @@ const empty = () => ({
   parts: '',
   engineer: '',
   outcome: '',
+  notes: '',
 })
 
 function thisMonth() {
@@ -91,6 +94,7 @@ export function Cleaning() {
       parts: entry.parts || '',
       engineer: entry.engineer || '',
       outcome: entry.outcome || '',
+      notes: entry.notes || '',
     }),
   })
 
@@ -190,6 +194,14 @@ export function Cleaning() {
       </div>
 
       {!formOpen && (
+        <TodaysRound
+          date={today()}
+          operator={operatorName}
+          onRecorded={() => void ledger.refresh()}
+        />
+      )}
+
+      {!formOpen && (
         <section className="card">
           <div className="card-head">
             <h2>Start a check</h2>
@@ -260,6 +272,16 @@ export function Cleaning() {
               />
             </label>
           </div>
+
+          <label className="field-wide">
+            Notes
+            <textarea
+              rows={2}
+              value={ledger.form.notes}
+              onChange={(event) => ledger.setField('notes', event.target.value)}
+              placeholder="Anything worth recording about this check as a whole"
+            />
+          </label>
 
           {form?.sections.map((section, index) => (
             <div key={section.heading ?? index} className="check-section">
@@ -433,6 +455,165 @@ export function Cleaning() {
   )
 }
 
+/**
+ * The order the boilers are walked on site: batch 1 first (No. 33 stands where
+ * No. 3 used to), then the other two batches in number order. The round is
+ * listed the way it is actually done, so nobody has to hunt up and down the row.
+ */
+const WALK_ORDER = ['1', '3', '33', '6', '2', '4', '5']
+
+function walkPosition(number: string) {
+  const known = WALK_ORDER.indexOf(number)
+  if (known >= 0) return known
+  const numeric = Number(number)
+  return Number.isFinite(numeric) ? 100 + numeric : 1000
+}
+
+/**
+ * The day's cleaning round. Every check each boiler is due today, in walking
+ * order, recorded with one tap: "Done" fills the whole form in as a clean
+ * check, "Not in use" records that the boiler was not running.
+ */
+function TodaysRound({
+  date,
+  operator,
+  onRecorded,
+}: {
+  date: string
+  operator: string
+  onRecorded: () => void
+}) {
+  const [items, setItems] = useState<CleaningDueItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState('')
+  const [error, setError] = useState('')
+
+  const load = useCallback(() => {
+    setLoading(true)
+    getCleaningDue(date)
+      .then((result) => setItems(result.data.items))
+      .catch(() => setError('Could not load the round. Check the connection and reload.'))
+      .finally(() => setLoading(false))
+  }, [date])
+
+  useEffect(() => load(), [load])
+
+  const ordered = useMemo(
+    () =>
+      [...items].sort(
+        (a, b) =>
+          walkPosition(a.number) - walkPosition(b.number) || a.form_code.localeCompare(b.form_code),
+      ),
+    [items],
+  )
+
+  const outstanding = ordered.filter((item) => item.recorded_id === null)
+
+  async function record(item: CleaningDueItem, inUse: boolean) {
+    const key = `${item.boiler_id}|${item.form_code}`
+    const definition = findForm(item.form_code)
+    setBusy(key)
+    setError('')
+    try {
+      await cleaningApi.create({
+        date,
+        time: clockTime(),
+        staff: operator,
+        boiler_id: String(item.boiler_id),
+        form_code: item.form_code,
+        // A boiler that was not running was not checked, so nothing is ticked;
+        // the note says why the form is empty.
+        answers: JSON.stringify(inUse ? completedAnswers(definition) : startingAnswers(definition)),
+        next_due: addDaysTo(date, definition?.intervalDays ?? item.interval_days),
+        notes: inUse ? '' : 'Boiler was not in use',
+        work_done: '',
+        duration: '',
+        parts: '',
+        engineer: '',
+        outcome: '',
+      })
+      load()
+      onRecorded()
+    } catch {
+      setError('That check could not be saved. Try again.')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  return (
+    <section className="card">
+      <div className="card-head">
+        <h2>Today&rsquo;s round</h2>
+        <span className="count">
+          {loading ? '' : `${outstanding.length} left of ${ordered.length}`}
+        </span>
+      </div>
+
+      {loading ? (
+        <p className="muted">Loading…</p>
+      ) : ordered.length === 0 ? (
+        <p className="muted">Nothing due today.</p>
+      ) : (
+        <ul className="round-list">
+          {ordered.map((item) => {
+            const key = `${item.boiler_id}|${item.form_code}`
+            const definition = findForm(item.form_code)
+            const saving = busy === key
+            return (
+              <li key={key} className={item.recorded_id === null ? undefined : 'round-done'}>
+                <div className="round-what">
+                  <strong>No. {item.number}</strong>
+                  <span>
+                    {item.form_code} · {definition?.title ?? 'Check'}
+                  </span>
+                  <em>
+                    {item.recorded_id !== null
+                      ? item.recorded_notes || 'Recorded'
+                      : item.overdue && item.last_date
+                        ? `Last done ${showDate(item.last_date)}`
+                        : item.last_date
+                          ? `Due today · last ${showDate(item.last_date)}`
+                          : 'Never recorded'}
+                  </em>
+                </div>
+                {item.recorded_id === null ? (
+                  <div className="round-actions">
+                    <button
+                      type="button"
+                      className="button"
+                      disabled={saving}
+                      onClick={() => void record(item, true)}
+                    >
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      className="button ghost"
+                      disabled={saving}
+                      onClick={() => void record(item, false)}
+                    >
+                      Not in use
+                    </button>
+                  </div>
+                ) : (
+                  <span className="round-tick" aria-label="Recorded">
+                    ✓
+                  </span>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {error && <p className="err">{error}</p>}
+      {!loading && ordered.length > 0 && (
+        <p className="hint">To correct one, edit it in the completed checks below.</p>
+      )}
+    </section>
+  )
+}
+
 function CompletedCheck({
   entry,
   boilerName,
@@ -496,7 +677,16 @@ function CompletedCheck({
           </div>
         ))}
 
-        {definition && definition.extras.some((extra) => parsed.extras[extra.name]) && (
+        {entry.notes && (
+          <div className="check-section">
+            <h3>Notes</h3>
+            <p>{entry.notes}</p>
+          </div>
+        )}
+
+        {definition &&
+          (definition.extras.some((extra) => parsed.extras[extra.name]) ||
+            Object.keys(RETIRED_EXTRA_LABELS).some((name) => parsed.extras[name])) && (
           <div className="check-section">
             <h3>Record</h3>
             <dl className="detail-list">
@@ -506,6 +696,15 @@ function CompletedCheck({
                   <div key={extra.name}>
                     <dt>{extra.label}</dt>
                     <dd>{parsed.extras[extra.name]}</dd>
+                  </div>
+                ))}
+              {/* Values saved under a field the form no longer has. */}
+              {Object.entries(RETIRED_EXTRA_LABELS)
+                .filter(([name]) => parsed.extras[name])
+                .map(([name, label]) => (
+                  <div key={name}>
+                    <dt>{label}</dt>
+                    <dd>{parsed.extras[name]}</dd>
                   </div>
                 ))}
             </dl>

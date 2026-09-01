@@ -2,6 +2,7 @@ import { loadSettings } from '../config'
 import type {
   AlertItem,
   Boiler,
+  CleaningDueResponse,
   CleaningEntry,
   Container,
   Defect,
@@ -125,6 +126,11 @@ export function getHealth() {
 
 export function getAlerts() {
   return request<ListResponse<AlertItem>>('/api/alerts')
+}
+
+/** The day's cleaning round: which boiler needs which check. */
+export function getCleaningDue(date: string) {
+  return request<CleaningDueResponse>(`/api/cleaning-due?date=${encodeURIComponent(date)}`)
 }
 
 export type ListQuery = Record<string, string | number | undefined>

@@ -48,11 +48,11 @@ function Gate() {
           <Route element={<Layout />}>
             <Route path="/cleaning" element={<Cleaning />} />
             <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/meter-readings" element={<MeterReadings />} />
             <Route path="/fuel-consumption" element={<FuelConsumptionPage />} />
             {isAdmin && (
               <>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/meter-readings" element={<MeterReadings />} />
                 <Route path="/boilers" element={<Boilers />} />
                 <Route path="/sites" element={<Sites />} />
                 <Route path="/rhi-usage" element={<RhiUsagePage />} />

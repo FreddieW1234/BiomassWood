@@ -285,6 +285,7 @@ p {
   align-items: baseline;
   gap: 1rem;
   margin-bottom: 0.9rem;
+  flex-wrap: wrap;
 }
 
 .count {
@@ -861,7 +862,7 @@ textarea {
   }
 
   .detail-list {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 }
 
@@ -1285,7 +1286,7 @@ textarea {
   }
 
   .form-picker {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }
 
@@ -1416,4 +1417,208 @@ textarea {
 .month-grid button.on {
   background: var(--ink);
   color: var(--paper);
+}
+
+/* ---------- today's cleaning round ---------- */
+
+.round-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.round-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #efece2;
+}
+
+.round-list li:last-child {
+  border-bottom: 0;
+}
+
+.round-what {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.round-what strong {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.round-what span {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.round-what em {
+  font-style: normal;
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.round-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex: none;
+}
+
+/* Recorded rows stay in the list so the round reads as a checklist that is
+   being worked through, rather than items vanishing as they are done. */
+.round-done {
+  opacity: 0.55;
+}
+
+.round-tick {
+  color: var(--moss);
+  font-size: 1.2rem;
+  flex: none;
+}
+
+/* ---------- phone sizing ---------- */
+
+/* Everything here exists because a phone screen is narrower than the widest
+   thing on the page. The rule is the same throughout: nothing gets a fixed
+   width, and anything that cannot shrink gets its own line. */
+@media (max-width: 720px) {
+  /* A stray wide element used to push the whole document sideways, which also
+     stopped the sticky top bar reaching the right-hand edge. Clip (not hidden)
+     so it never becomes a scroll container. */
+  .content {
+    overflow-x: clip;
+  }
+
+  /* A card heading and its filters cannot share a line on a phone, so the
+     filters take a line of their own. A lone Close button is not a filter and
+     stays beside the heading, where it reads as belonging to it. */
+  .card-head {
+    gap: 0.7rem;
+  }
+
+  .card-head .head-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 0.55rem 0.9rem;
+  }
+
+  /* A long heading pushes its Close button onto the next line; keep it over on
+     the right where it started rather than adrift under the title. */
+  .card-head > .text-button {
+    margin-left: auto;
+  }
+
+  /* Each filter takes a full-width row: name on the left, control filling the
+     rest. Two of them side by side never fit. A checkbox is not a filter of
+     that kind -- it stays next to its own label instead of being flung to the
+     opposite edge of the screen. */
+  .head-actions .toolbar-toggle:not(:has(input[type='checkbox'])) {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .head-actions .toolbar-toggle > select,
+  .head-actions .toolbar-toggle > .month-picker,
+  .head-actions .toolbar-toggle > input:not([type='checkbox']) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 9.5rem is wider than the space left beside the label on a small phone. */
+  .head-actions .month-trigger {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .month-pop {
+    width: min(15rem, calc(100vw - 2.5rem));
+  }
+
+  /* A form that scrolls inside a page that also scrolls is horrible to use on
+     a touchscreen; let the form grow and the page do the scrolling. */
+  .form-card {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  /* Tabs share the width evenly rather than overflowing a clipped strip.
+     Auto columns so adding a fourth tab still works. */
+  .view-switch {
+    max-width: 100%;
+  }
+
+  .view-switch.tabs {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    width: 100%;
+  }
+
+  .view-switch.tabs button {
+    padding: 0.5rem 0.35rem;
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+
+  /* 15rem of chrome to subtract left almost nothing to scroll on a phone. */
+  .grid-scroll {
+    max-height: calc(100svh - 11rem);
+  }
+
+  /* The round is worked through on a phone, standing at the boiler, so the two
+     buttons get a line of their own and a thumb-sized target. */
+  .round-list li {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .round-actions {
+    flex: 1 1 100%;
+  }
+
+  .round-actions .button {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  /* A 7.5rem kind column plus a date left the boiler name nothing at all --
+     it was being squeezed to zero width and vanishing. The name gets its own
+     line underneath instead, and the date may drop its badge below itself. */
+  .due-list li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.15rem 0.6rem;
+  }
+
+  .due-kind {
+    white-space: normal;
+  }
+
+  .due-boiler {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
+    overflow: visible;
+    font-size: 0.86rem;
+  }
+
+  .due-date {
+    text-align: right;
+    white-space: normal;
+  }
+}
+
+/* Small phones (iPhone SE and similar) cannot fit two fields side by side. */
+@media (max-width: 430px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
 }

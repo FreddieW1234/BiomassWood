@@ -12,6 +12,18 @@ export function nearestHour(now = new Date()) {
   return `${String(rounded.getHours()).padStart(2, '0')}:00`
 }
 
+/** The clock time now, HH:MM -- what a check recorded on the spot happened at. */
+export function clockTime(now = new Date()) {
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
+/** A date that many days after the given one, both YYYY-MM-DD. */
+export function addDaysTo(date: string, days: number) {
+  const moved = new Date(`${date}T00:00:00`)
+  moved.setDate(moved.getDate() + days)
+  return `${moved.getFullYear()}-${String(moved.getMonth() + 1).padStart(2, '0')}-${String(moved.getDate()).padStart(2, '0')}`
+}
+
 export function showDate(value: string) {
   if (!value) return '—'
   const [y, m, d] = value.split('-')
