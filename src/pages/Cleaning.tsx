@@ -50,6 +50,60 @@ function monthRange(month: string) {
   return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` }
 }
 
+/**
+ * A check of the same kind already recorded against that boiler on that day.
+ * One day of one form is at most a few dozen rows, so this is a cheap lookup
+ * and it catches the case two people on site cannot: someone else recorded it
+ * after your list was loaded.
+ */
+async function findExisting(date: string, boilerId: string, formCode: string) {
+  if (!date || !formCode) return null
+  const wanted = boilerId === '' ? null : Number(boilerId)
+  try {
+    const result = await cleaningApi.list({ from: date, to: date, form_code: formCode, limit: 200 })
+    return result.data.items.find((item) => item.boiler_id === wanted) ?? null
+  } catch {
+    // A failed check should not block the save; the worst case is a duplicate.
+    return null
+  }
+}
+
+function DuplicateWarning({
+  existing,
+  what,
+  onConfirm,
+  onCancel,
+}: {
+  existing: CleaningEntry
+  what: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal" onClick={(event) => event.stopPropagation()}>
+        <div className="card-head">
+          <h2>Already done</h2>
+        </div>
+        <p>
+          {what} was recorded on {showDate(existing.date)}
+          {existing.time ? ` at ${existing.time}` : ''}
+          {existing.staff ? ` by ${existing.staff}` : ''}.
+        </p>
+        <p className="muted">Recording it again will leave two checks against the same boiler that day.</p>
+        <div className="row">
+          <button type="button" className="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="button ghost" onClick={onConfirm}>
+            Record it anyway
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function addDays(days: number) {
   const date = new Date()
   date.setDate(date.getDate() + days)
@@ -107,6 +161,7 @@ export function Cleaning() {
   const [chosenCode, setChosenCode] = useState('')
   const [answers, setAnswers] = useState<CleaningAnswers>(emptyAnswers)
   const [viewing, setViewing] = useState<CleaningEntry | null>(null)
+  const [duplicate, setDuplicate] = useState<CleaningEntry | null>(null)
 
   const form = findForm(chosenCode)
 
@@ -159,8 +214,7 @@ export function Cleaning() {
     setAnswers((current) => ({ ...current, extras: { ...current.extras, [name]: value } }))
   }
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault()
+  async function save() {
     ledger.setField('answers', JSON.stringify(answers))
     // setField is async, so build the payload here rather than trusting state.
     const payload = { ...ledger.form, form_code: chosenCode, answers: JSON.stringify(answers) }
@@ -171,6 +225,19 @@ export function Cleaning() {
       await ledger.refresh()
       close()
     }
+  }
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    // Editing an existing check is not a duplicate of itself.
+    if (!ledger.editingId) {
+      const existing = await findExisting(ledger.form.date, ledger.form.boiler_id, chosenCode)
+      if (existing) {
+        setDuplicate(existing)
+        return
+      }
+    }
+    await save()
   }
 
   const rows = useMemo(
@@ -478,6 +545,22 @@ export function Cleaning() {
       {viewing && <CompletedCheck entry={viewing} onClose={() => setViewing(null)} boilerName={
         viewing.boiler_id === null ? '—' : boilerLabel(byId.get(viewing.boiler_id))
       } />}
+
+      {duplicate && (
+        <DuplicateWarning
+          existing={duplicate}
+          what={`${chosenCode}${form ? ` · ${form.title}` : ''} for ${
+            ledger.form.boiler_id === ''
+              ? 'no particular boiler'
+              : boilerLabel(byId.get(Number(ledger.form.boiler_id)))
+          }`}
+          onCancel={() => setDuplicate(null)}
+          onConfirm={() => {
+            setDuplicate(null)
+            void save()
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -514,6 +597,11 @@ function TodaysRound({
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
+  const [pending, setPending] = useState<{
+    item: CleaningDueItem
+    inUse: boolean
+    existing: CleaningEntry
+  } | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -525,23 +613,35 @@ function TodaysRound({
 
   useEffect(() => load(), [load])
 
+  // Done jobs sink to the bottom so what is left to do is always at the top;
+  // within each group, the order the boilers are walked.
   const ordered = useMemo(
     () =>
       [...items].sort(
         (a, b) =>
-          walkPosition(a.number) - walkPosition(b.number) || a.form_code.localeCompare(b.form_code),
+          Number(a.recorded_id !== null) - Number(b.recorded_id !== null) ||
+          walkPosition(a.number) - walkPosition(b.number) ||
+          a.form_code.localeCompare(b.form_code),
       ),
     [items],
   )
 
   const outstanding = ordered.filter((item) => item.recorded_id === null)
 
-  async function record(item: CleaningDueItem, inUse: boolean) {
+  async function record(item: CleaningDueItem, inUse: boolean, anyway = false) {
     const key = `${item.boiler_id}|${item.form_code}`
     const definition = findForm(item.form_code)
     setBusy(key)
     setError('')
     try {
+      // Someone else may have done this since the list was loaded.
+      if (!anyway) {
+        const existing = await findExisting(date, String(item.boiler_id), item.form_code)
+        if (existing) {
+          setPending({ item, inUse, existing })
+          return
+        }
+      }
       await cleaningApi.create({
         date,
         time: clockTime(),
@@ -636,6 +736,25 @@ function TodaysRound({
       {error && <p className="err">{error}</p>}
       {!loading && ordered.length > 0 && (
         <p className="hint">To correct one, edit it in the completed checks below.</p>
+      )}
+
+      {pending && (
+        <DuplicateWarning
+          existing={pending.existing}
+          what={`${pending.item.form_code}${
+            findForm(pending.item.form_code) ? ` · ${findForm(pending.item.form_code)?.title}` : ''
+          } for No. ${pending.item.number}`}
+          onCancel={() => {
+            setPending(null)
+            // The list was out of date, so bring it in line with the server.
+            load()
+          }}
+          onConfirm={() => {
+            const { item, inUse } = pending
+            setPending(null)
+            void record(item, inUse, true)
+          }}
+        />
       )}
     </section>
   )
