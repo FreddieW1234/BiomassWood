@@ -312,7 +312,6 @@ export type MeterReading = Timestamps & {
   reading: number
   staff: string
   notes: string
-  reading_at: string
 }
 
 export type EarningEntry = Timestamps & {

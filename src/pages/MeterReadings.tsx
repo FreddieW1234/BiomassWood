@@ -14,7 +14,6 @@ const empty = () => ({
   reading: '',
   staff: DEFAULT_READER,
   notes: '',
-  reading_at: '',
 })
 
 function shortDate(iso: string) {
@@ -35,7 +34,6 @@ export function MeterReadings() {
       reading: String(r.reading),
       staff: r.staff,
       notes: r.notes,
-      reading_at: r.reading_at || '',
     }),
   })
 
@@ -299,14 +297,6 @@ export function MeterReadings() {
                 value={ledger.form.boiler_id}
                 onChange={(value) => ledger.setField('boiler_id', value)}
                 required
-              />
-            </label>
-            <label>
-              Time (optional)
-              <input
-                value={ledger.form.reading_at}
-                onChange={(e) => ledger.setField('reading_at', e.target.value)}
-                placeholder="HH:MM or full timestamp"
               />
             </label>
             <label>
