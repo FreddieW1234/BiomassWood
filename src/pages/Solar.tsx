@@ -37,9 +37,11 @@ export function Solar() {
     }),
   })
 
-  // Units generated since the previous reading (list is newest-first).
+  // Units generated since the previous reading (list is newest-first), and the
+  // rate that works out at per day, which is what makes two readings taken
+  // over different gaps comparable.
   const generated = useMemo(() => {
-    const map = new Map<number, { units: number; days: number }>()
+    const map = new Map<number, { units: number; days: number; perDay: number | null }>()
     const sorted = [...readings.items].sort((a, b) =>
       a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1,
     )
@@ -48,7 +50,7 @@ export function Solar() {
       const days = Math.round(
         (Date.parse(sorted[i].date) - Date.parse(sorted[i - 1].date)) / 86400000,
       )
-      map.set(sorted[i].id, { units, days })
+      map.set(sorted[i].id, { units, days, perDay: days > 0 ? units / days : null })
     }
     return map
   }, [readings.items])
@@ -166,6 +168,7 @@ export function Solar() {
                     <th className="num">Reading</th>
                     <th className="num">Generated</th>
                     <th className="num">Days</th>
+                    <th className="num">Gen / day</th>
                     <th>Notes</th>
                     <th />
                   </tr>
@@ -175,11 +178,14 @@ export function Solar() {
                     const delta = generated.get(item.id)
                     return (
                       <tr key={item.id}>
-                        <td className="nowrap">{showDate(item.date)}</td>
-                        <td className="num">{figure(item.reading)}</td>
-                        <td className="num">{delta ? figure(delta.units) : '—'}</td>
-                        <td className="num">{delta ? figure(delta.days) : '—'}</td>
-                        <td className="wrap">{item.notes || '—'}</td>
+                        <td className="nowrap" data-label="Date">{showDate(item.date)}</td>
+                        <td className="num" data-label="Reading">{figure(item.reading)}</td>
+                        <td className="num" data-label="Generated">{delta ? figure(delta.units) : '—'}</td>
+                        <td className="num" data-label="Days">{delta ? figure(delta.days) : '—'}</td>
+                        <td className="num" data-label="Gen / day">
+                          {delta?.perDay == null ? '—' : delta.perDay.toFixed(2)}
+                        </td>
+                        <td className="wrap" data-label="Notes">{item.notes || '—'}</td>
                         <td className="actions">
                           <button
                             type="button"
