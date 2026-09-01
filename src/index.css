@@ -1451,6 +1451,64 @@ textarea {
   color: var(--paper);
 }
 
+/* ---------- entering a whole round of readings ---------- */
+
+.round-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem 1.2rem;
+  margin-bottom: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--moss-soft);
+  border: 1px solid #cfe0d3;
+  border-radius: 9px;
+}
+
+.round-bar .toolbar-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.round-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.round-bar .err {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* The column being typed into, marked out from the history beside it. */
+.grid-table .round-col {
+  background: var(--moss-soft);
+  box-shadow: inset -1px 0 0 #cfe0d3;
+}
+
+.grid-table thead .round-col {
+  background: var(--moss-soft);
+  color: var(--moss);
+}
+
+.grid-table .round-col .cell-input {
+  width: 5rem;
+}
+
+@media (max-width: 720px) {
+  .round-bar-actions {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+
+  .round-bar-actions .button {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
 /* ---------- today's cleaning round ---------- */
 
 .round-list {

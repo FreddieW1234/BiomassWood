@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { meterReadingsApi } from '../api/client'
 import type { MeterReading } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
@@ -41,6 +41,12 @@ export function MeterReadings() {
 
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [formOpen, setFormOpen] = useState(false)
+
+  // A whole round of readings being typed: one date, a value per boiler.
+  const [round, setRound] = useState<{ date: string; values: Record<number, string> } | null>(null)
+  const [roundSaving, setRoundSaving] = useState(false)
+  const [roundError, setRoundError] = useState<string | null>(null)
+  const roundInputs = useRef<(HTMLInputElement | null)[]>([])
 
   // Inline (Excel-style) cell editing
   const [cell, setCell] = useState<Cell | null>(null)
@@ -139,6 +145,80 @@ export function MeterReadings() {
     }
   }
 
+  // --- reading round -----------------------------------------------------
+  // Readings are taken for every boiler in one walk round the site, so they
+  // are entered that way too: one date, then a column of boxes down the grid.
+  // The previous readings stay visible on each row while it is typed.
+  function roundValues(date: string) {
+    const values: Record<number, string> = {}
+    for (const boiler of gridBoilers) {
+      const existing = cells.get(`${boiler.id}|${date}`)
+      if (existing) values[boiler.id] = String(existing.reading)
+    }
+    return values
+  }
+
+  function startRound() {
+    const date = today()
+    setRound({ date, values: roundValues(date) })
+    setRoundError(null)
+  }
+
+  function setRoundDate(date: string) {
+    // Moving the date shows whatever is already recorded on the new one.
+    setRound({ date, values: roundValues(date) })
+  }
+
+  function moveWithin(index: number, by: number) {
+    const next = roundInputs.current[index + by]
+    if (!next) return
+    next.focus()
+    next.select()
+  }
+
+  async function saveRound() {
+    if (!round || roundSaving) return
+    const creates: Record<string, unknown>[] = []
+    const updates: { id: number; reading: number }[] = []
+    for (const boiler of gridBoilers) {
+      const raw = (round.values[boiler.id] ?? '').trim()
+      if (raw === '') continue
+      const value = Number(raw)
+      if (!Number.isFinite(value)) {
+        setRoundError(`No. ${boiler.number}: "${raw}" is not a number`)
+        return
+      }
+      const existing = cells.get(`${boiler.id}|${round.date}`)
+      if (existing) {
+        if (existing.reading !== value) updates.push({ id: existing.id, reading: value })
+      } else {
+        creates.push({
+          date: round.date,
+          boiler_id: boiler.id,
+          reading: value,
+          staff: DEFAULT_READER,
+        })
+      }
+    }
+    if (creates.length === 0 && updates.length === 0) {
+      setRound(null)
+      return
+    }
+    setRoundSaving(true)
+    setRoundError(null)
+    try {
+      // One request for the new ones rather than fifteen.
+      if (creates.length > 0) await meterReadingsApi.bulkCreate(creates)
+      for (const item of updates) await meterReadingsApi.update(item.id, { reading: item.reading })
+      await ledger.refresh()
+      setRound(null)
+    } catch (error) {
+      setRoundError(error instanceof Error ? error.message : 'Could not save the round')
+    } finally {
+      setRoundSaving(false)
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     const saved = await ledger.submit()
@@ -173,9 +253,14 @@ export function MeterReadings() {
               List
             </button>
           </div>
+          {!round && view === 'grid' && (
+            <button type="button" className="button" onClick={startRound}>
+              New round
+            </button>
+          )}
           {!formOpen && (
-            <button type="button" className="button" onClick={() => setFormOpen(true)}>
-              New reading
+            <button type="button" className="button ghost" onClick={() => setFormOpen(true)}>
+              One reading
             </button>
           )}
         </div>
@@ -262,9 +347,35 @@ export function MeterReadings() {
 
       <section className="card">
         {cellError && <p className="err">{cellError}</p>}
+        {round && (
+          <div className="round-bar">
+            <label className="toolbar-toggle">
+              Reading date
+              <input
+                type="date"
+                value={round.date}
+                onChange={(event) => setRoundDate(event.target.value)}
+              />
+            </label>
+            <span className="muted">
+              {Object.values(round.values).filter((v) => v.trim() !== '').length} of{' '}
+              {gridBoilers.length} entered · Enter or ↓ for the next boiler
+            </span>
+            <div className="round-bar-actions">
+              <button type="button" className="button" disabled={roundSaving} onClick={() => void saveRound()}>
+                {roundSaving ? 'Saving…' : 'Save round'}
+              </button>
+              <button type="button" className="button ghost" disabled={roundSaving} onClick={() => setRound(null)}>
+                Cancel
+              </button>
+            </div>
+            {roundError && <p className="err">{roundError}</p>}
+          </div>
+        )}
+
         {ledger.loading ? (
           <p className="muted">Loading…</p>
-        ) : ledger.items.length === 0 ? (
+        ) : ledger.items.length === 0 && !round ? (
           <p className="muted">No readings recorded yet.</p>
         ) : view === 'grid' ? (
           <div className="grid-scroll">
@@ -272,15 +383,52 @@ export function MeterReadings() {
               <thead>
                 <tr>
                   <th className="boiler-col">Boiler</th>
+                  {round && <th className="round-col">{shortDate(round.date)}</th>}
                   {dates.map((date) => (
                     <th key={date}>{shortDate(date)}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {gridBoilers.map((boiler) => (
+                {gridBoilers.map((boiler, index) => (
                   <tr key={boiler.id}>
                     <td className="boiler-col">No. {boiler.number}</td>
+                    {round && (
+                      <td className="round-col">
+                        <input
+                          ref={(el) => {
+                            roundInputs.current[index] = el
+                          }}
+                          type="number"
+                          step="any"
+                          className="cell-input"
+                          value={round.values[boiler.id] ?? ''}
+                          disabled={roundSaving}
+                          autoFocus={index === 0}
+                          onChange={(event) =>
+                            setRound((current) =>
+                              current
+                                ? { ...current, values: { ...current.values, [boiler.id]: event.target.value } }
+                                : current,
+                            )
+                          }
+                          onKeyDown={(event) => {
+                            // Down and Enter walk the column the way a
+                            // spreadsheet does; without this the number input
+                            // would just nudge the value up and down.
+                            if (event.key === 'ArrowDown' || event.key === 'Enter') {
+                              event.preventDefault()
+                              moveWithin(index, 1)
+                            } else if (event.key === 'ArrowUp') {
+                              event.preventDefault()
+                              moveWithin(index, -1)
+                            } else if (event.key === 'Escape') {
+                              setRound(null)
+                            }
+                          }}
+                        />
+                      </td>
+                    )}
                     {dates.map((date) => {
                       const item = cells.get(`${boiler.id}|${date}`)
                       const editing = cell?.boilerId === boiler.id && cell?.date === date
