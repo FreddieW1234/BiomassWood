@@ -59,12 +59,17 @@ function addDays(days: number) {
 export function Cleaning() {
   const { boilers, byId } = useBoilers()
   const { user } = useAuth()
+  // A day at a time by default: a whole month of checks is hundreds of rows to
+  // scroll past, and what anyone standing at a boiler wants is today.
+  const [scope, setScope] = useState<'day' | 'month'>('day')
+  const [day, setDay] = useState(today)
   const [month, setMonth] = useState(thisMonth)
   const [filterBoiler, setFilterBoiler] = useState('')
 
-  // The log runs to tens of thousands of rows, so only ever fetch one month.
+  // The log runs to tens of thousands of rows, so never fetch more than the
+  // window being looked at.
   const scopedApi = useMemo(() => {
-    const { from, to } = monthRange(month)
+    const { from, to } = scope === 'day' ? { from: day, to: day } : monthRange(month)
     return {
       ...cleaningApi,
       list: () =>
@@ -75,7 +80,7 @@ export function Cleaning() {
           boiler_id: filterBoiler || undefined,
         }),
     }
-  }, [month, filterBoiler])
+  }, [scope, day, month, filterBoiler])
   // Whoever is signed in is doing the check; their name, not their login.
   const operatorName = user?.display_name?.trim() || user?.username || ''
   const ledger = useLedger<CleaningEntry, ReturnType<typeof empty>>({
@@ -376,9 +381,29 @@ export function Cleaning() {
         <div className="card-head">
           <h2>Completed checks</h2>
           <div className="head-actions">
+            <div className="view-switch">
+              <button
+                type="button"
+                className={scope === 'day' ? 'on' : ''}
+                onClick={() => setScope('day')}
+              >
+                Day
+              </button>
+              <button
+                type="button"
+                className={scope === 'month' ? 'on' : ''}
+                onClick={() => setScope('month')}
+              >
+                Month
+              </button>
+            </div>
             <label className="toolbar-toggle">
-              Month
-              <MonthPicker value={month} onChange={setMonth} />
+              {scope === 'day' ? 'Date' : 'Month'}
+              {scope === 'day' ? (
+                <input type="date" value={day} onChange={(event) => setDay(event.target.value)} />
+              ) : (
+                <MonthPicker value={month} onChange={setMonth} />
+              )}
             </label>
             <label className="toolbar-toggle">
               Boiler
@@ -390,7 +415,9 @@ export function Cleaning() {
         {ledger.loading ? (
           <p className="muted">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="muted">No checks recorded in this month.</p>
+          <p className="muted">
+            {scope === 'day' ? 'No checks recorded on this day.' : 'No checks recorded in this month.'}
+          </p>
         ) : (
           <div className="table-wrap">
             <table className="ledger">
