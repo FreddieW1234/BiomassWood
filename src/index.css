@@ -1488,8 +1488,33 @@ textarea {
   text-decoration: underline;
 }
 
+.grid-table .boiler-col .date-button {
+  font: inherit;
+  color: inherit;
+}
+
 .date-button:disabled {
   cursor: default;
+}
+
+/* Clicking a boiler number or a date picks that line out and keeps it picked
+   until it is clicked again, so a row can be followed across sixty columns
+   without losing it. Several can be lit at once to compare two boilers.
+   The column being edited keeps its own green, so :not(.round-col). */
+.grid-table tbody tr.lit-row td,
+.grid-table tbody tr.lit-row .boiler-col,
+.grid-table td.lit-col:not(.round-col),
+.grid-table thead th.lit-col {
+  background: #fbf4dd;
+}
+
+/* Where a lit row meets a lit column. */
+.grid-table tbody tr.lit-row td.lit-col:not(.round-col) {
+  background: #f5e7b4;
+}
+
+.grid-table thead th.lit-col {
+  color: var(--ink);
 }
 
 /* ---------- entering a whole round of readings ---------- */

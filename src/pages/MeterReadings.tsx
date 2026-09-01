@@ -38,6 +38,17 @@ export function MeterReadings() {
 
   const [view, setView] = useState<'grid' | 'list'>('grid')
 
+  // Rows and columns picked out to follow across the grid. Several can be lit
+  // at once, so two boilers can be compared without losing your place.
+  const [litRows, setLitRows] = useState<Set<number>>(new Set())
+  const [litCols, setLitCols] = useState<Set<string>>(new Set())
+
+  function toggle<T>(set: Set<T>, key: T) {
+    const next = new Set(set)
+    if (!next.delete(key)) next.add(key)
+    return next
+  }
+
   // A whole column of readings being worked on: one date, a value per boiler.
   // `origin` is the date the column already lives under, or null when it is a
   // new one being added.
@@ -391,13 +402,13 @@ export function MeterReadings() {
                         {shortDate(round.date)}
                       </th>
                     ) : (
-                      <th key={date}>
+                      <th key={date} className={litCols.has(date) ? 'lit-col' : undefined}>
                         <button
                           type="button"
                           className="date-button"
-                          disabled={Boolean(round)}
-                          onClick={() => editColumn(date)}
-                          title={`${showDate(date)} — click to edit this whole column`}
+                          onClick={() => setLitCols((current) => toggle(current, date))}
+                          onDoubleClick={() => editColumn(date)}
+                          title={`${showDate(date)} — click to highlight, double-click to edit the column`}
                         >
                           {shortDate(date)}
                         </button>
@@ -408,15 +419,25 @@ export function MeterReadings() {
               </thead>
               <tbody>
                 {gridBoilers.map((boiler, index) => (
-                  <tr key={boiler.id}>
-                    <td className="boiler-col">No. {boiler.number}</td>
+                  <tr key={boiler.id} className={litRows.has(boiler.id) ? 'lit-row' : undefined}>
+                    <td className="boiler-col">
+                      <button
+                        type="button"
+                        className="date-button"
+                        onClick={() => setLitRows((current) => toggle(current, boiler.id))}
+                        title={`No. ${boiler.number} — click to highlight this row`}
+                      >
+                        No. {boiler.number}
+                      </button>
+                    </td>
                     {round?.origin === null && (
                       <td className="round-col">{roundInput(boiler, index)}</td>
                     )}
                     {dates.map((date) => {
+                      const litCol = litCols.has(date) ? ' lit-col' : ''
                       if (round?.origin === date) {
                         return (
-                          <td key={date} className="round-col">
+                          <td key={date} className={`round-col${litCol}`}>
                             {roundInput(boiler, index)}
                           </td>
                         )
@@ -425,7 +446,7 @@ export function MeterReadings() {
                       const editing = cell?.boilerId === boiler.id && cell?.date === date
                       if (editing) {
                         return (
-                          <td key={date}>
+                          <td key={date} className={litCol || undefined}>
                             <input
                               autoFocus
                               type="number"
@@ -460,7 +481,7 @@ export function MeterReadings() {
                           }${suspect ? ' — unusually high, check this reading' : ''} — double-click to edit`
                         : `${showDate(date)} · no reading — double-click to add`
                       return (
-                        <td key={date}>
+                        <td key={date} className={litCol || undefined}>
                           <button
                             type="button"
                             className={`cell-button${item ? '' : ' empty'}${reset ? ' reset' : ''}${
