@@ -88,10 +88,11 @@ export function MeterReadings() {
     return map
   }, [ledger.items])
 
-  const gridBoilers = useMemo(() => {
-    const withReadings = new Set(ledger.items.map((item) => item.boiler_id))
-    return boilers.filter((boiler) => withReadings.has(boiler.id))
-  }, [boilers, ledger.items])
+  // Every boiler that should be read gets a row, whether or not it has been
+  // read before. Listing only boilers with readings left a new one -- No. 33,
+  // swapped in for No. 3 -- with no row, and so no cell to type its first
+  // reading into. Which boilers count is the sidebar's sold-boilers switch.
+  const gridBoilers = boilers
 
   function startEdit(boilerId: number, date: string, existing?: MeterReading) {
     setCell({ boilerId, date })
