@@ -66,7 +66,7 @@ export function Maintenance() {
       )}
 
       {showing === 'external' ? (
-        <ExternalWork boilers={boilers} byId={byId} />
+        <ExternalWork />
       ) : (
         <>
           {!selectedId && <p className="muted">Choose a boiler to see and add its records.</p>}

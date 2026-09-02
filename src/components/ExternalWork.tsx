@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { externalWorkApi, externalWorkFormsApi } from '../api/client'
-import type { Boiler, ExternalWorkEntry, ExternalWorkForm, FormField } from '../api/types'
-import { BoilerSelect } from './BoilerSelect'
-import { boilerLabel, showDate, today } from '../lib/format'
+import type { ExternalWorkEntry, ExternalWorkForm, FormField } from '../api/types'
+import { today } from '../lib/format'
 import { fieldKey, inferType, parseFields, parseValues, showValue, typeLabel } from '../lib/formFields'
 
 function blankField(taken: string[]): FormField {
@@ -10,36 +9,44 @@ function blankField(taken: string[]): FormField {
 }
 
 /**
- * External work records, kept against a form the office designs itself.
+ * External work, kept against forms the office designs itself.
  *
- * The fields are not fixed in code because what an external job needs to record
- * is not settled: "Edit form" adds, renames and reorders them, and the records
- * follow. Values are stored against a field's key rather than its label, so
- * renaming one keeps what has already been entered.
+ * There is no fixed shape for an external job, so there is no fixed form: each
+ * one is named and given its own fields here, and its records follow. A record
+ * holds nothing the form did not ask for -- if a job needs a date or a boiler,
+ * that is a field like any other.
+ *
+ * Values are stored against a field's key rather than its label, so renaming a
+ * field keeps whatever has already been entered under it.
  */
-export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<number, Boiler> }) {
-  const [form, setForm] = useState<ExternalWorkForm | null>(null)
+export function ExternalWork() {
+  const [forms, setForms] = useState<ExternalWorkForm[]>([])
   const [entries, setEntries] = useState<ExternalWorkEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const [designing, setDesigning] = useState(false)
+  const [openId, setOpenId] = useState<number | null>(null)
+  const [designingId, setDesigningId] = useState<number | 'new' | null>(null)
+  const [draftName, setDraftName] = useState('')
   const [draft, setDraft] = useState<FormField[]>([])
 
   const [entryOpen, setEntryOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [entryDate, setEntryDate] = useState(today())
-  const [entryBoiler, setEntryBoiler] = useState('')
   const [entryValues, setEntryValues] = useState<Record<string, string>>({})
 
-  const fields = useMemo(() => parseFields(form?.fields ?? ''), [form])
+  const openForm = openId === null ? null : (forms.find((f) => f.id === openId) ?? null)
+  const fields = useMemo(() => parseFields(openForm?.fields ?? ''), [openForm])
+  const formEntries = useMemo(
+    () => entries.filter((entry) => entry.form_id === openId),
+    [entries, openId],
+  )
 
   const load = useCallback(() => {
     setLoading(true)
-    Promise.all([externalWorkFormsApi.list(), externalWorkApi.list({ limit: 500 })])
-      .then(([forms, rows]) => {
-        setForm(forms.data.items[0] ?? null)
+    Promise.all([externalWorkFormsApi.list(), externalWorkApi.list({ limit: 1000 })])
+      .then(([formList, rows]) => {
+        setForms(formList.data.items)
         setEntries(rows.data.items)
       })
       .catch(() => setError('Could not load external work.'))
@@ -48,11 +55,20 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
 
   useEffect(() => load(), [load])
 
-  // --- designing the form ------------------------------------------------
+  // --- designing a form --------------------------------------------------
 
-  function startDesigning() {
-    setDraft(fields.length > 0 ? fields : [blankField([])])
-    setDesigning(true)
+  function startNewForm() {
+    setDraftName('')
+    setDraft([blankField([])])
+    setDesigningId('new')
+    setError('')
+  }
+
+  function startEditingForm(form: ExternalWorkForm) {
+    const existing = parseFields(form.fields)
+    setDraftName(form.name)
+    setDraft(existing.length > 0 ? existing : [blankField([])])
+    setDesigningId(form.id)
     setError('')
   }
 
@@ -73,14 +89,22 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
   }
 
   async function saveForm() {
+    const name = draftName.trim()
+    if (!name) {
+      setError('Give the form a name.')
+      return
+    }
+    const known =
+      designingId === 'new'
+        ? []
+        : parseFields(forms.find((f) => f.id === designingId)?.fields ?? '')
     const cleaned: FormField[] = []
     for (const field of draft) {
       const label = field.label.trim()
       if (!label) continue
-      // An existing field keeps the key its records are stored under; one that
-      // has never been saved gets a key from its label now.
-      const known = fields.some((f) => f.key === field.key)
-      const key = known ? field.key : fieldKey(label, cleaned.map((f) => f.key))
+      // A field that already exists keeps the key its records are stored under.
+      const seen = known.some((f) => f.key === field.key)
+      const key = seen ? field.key : fieldKey(label, cleaned.map((f) => f.key))
       const options = (field.options ?? []).map((o) => o.trim()).filter(Boolean)
       // The kind of box follows from the name, so nobody has to pick one.
       const type = inferType(label, options.length > 0)
@@ -99,11 +123,15 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
     setSaving(true)
     setError('')
     try {
-      const payload = { name: 'External work', fields: JSON.stringify(cleaned) }
-      if (form) await externalWorkFormsApi.update(form.id, payload)
-      else await externalWorkFormsApi.create(payload)
+      const payload = { name, fields: JSON.stringify(cleaned) }
+      if (designingId === 'new') {
+        const created = await externalWorkFormsApi.create(payload)
+        setOpenId(created.data.item.id)
+      } else if (designingId !== null) {
+        await externalWorkFormsApi.update(designingId, payload)
+      }
       load()
-      setDesigning(false)
+      setDesigningId(null)
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'Could not save the form')
     } finally {
@@ -111,12 +139,27 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
     }
   }
 
-  // --- filling it in -----------------------------------------------------
+  async function removeForm(form: ExternalWorkForm) {
+    const used = entries.filter((entry) => entry.form_id === form.id).length
+    if (used > 0) {
+      setError(
+        `${form.name} still has ${used} record${used === 1 ? '' : 's'}. Delete those first if the form is really going.`,
+      )
+      return
+    }
+    try {
+      await externalWorkFormsApi.remove(form.id)
+      if (openId === form.id) setOpenId(null)
+      load()
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Could not delete the form')
+    }
+  }
+
+  // --- filling one in ----------------------------------------------------
 
   function startEntry() {
     setEditingId(null)
-    setEntryDate(today())
-    setEntryBoiler('')
     setEntryValues({})
     setEntryOpen(true)
     setError('')
@@ -124,8 +167,6 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
 
   function editEntry(entry: ExternalWorkEntry) {
     setEditingId(entry.id)
-    setEntryDate(entry.date)
-    setEntryBoiler(entry.boiler_id === null ? '' : String(entry.boiler_id))
     setEntryValues(parseValues(entry.answers))
     setEntryOpen(true)
     setError('')
@@ -136,10 +177,12 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
     setSaving(true)
     setError('')
     try {
+      const editing = entries.find((entry) => entry.id === editingId)
       const payload = {
-        date: entryDate,
-        boiler_id: entryBoiler,
-        form_id: form ? form.id : '',
+        // Not asked for and not shown: the day it was entered, kept only so the
+        // list has something stable to order by.
+        date: editing ? editing.date : today(),
+        form_id: openId ?? '',
         answers: JSON.stringify(entryValues),
       }
       if (editingId) await externalWorkApi.update(editingId, payload)
@@ -164,19 +207,31 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
 
   if (loading) return <p className="muted">Loading…</p>
 
-  if (designing) {
+  // --- the designer ------------------------------------------------------
+
+  if (designingId !== null) {
     return (
       <section className="card">
         <div className="card-head">
-          <h2>External work form</h2>
-          <button type="button" className="text-button" onClick={() => setDesigning(false)}>
+          <h2>{designingId === 'new' ? 'New form' : 'Edit form'}</h2>
+          <button type="button" className="text-button" onClick={() => setDesigningId(null)}>
             Close
           </button>
         </div>
+
+        <label className="field-wide">
+          Form name
+          <input
+            value={draftName}
+            onChange={(event) => setDraftName(event.target.value)}
+            placeholder="e.g. Contractor visit"
+          />
+        </label>
+
         <p className="muted">
-          Name the fields an external job needs to record; the kind of box each one gets follows
-          from its name. Give a field choices and it becomes a dropdown instead. Renaming a field
-          keeps whatever has already been entered against it.
+          Name the fields this form needs; the kind of box each one gets follows from its name.
+          Give a field choices and it becomes a dropdown instead. Renaming a field keeps whatever
+          has already been entered against it.
         </p>
 
         <ul className="field-builder">
@@ -195,7 +250,9 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
                   Choices, separated by commas
                   <input
                     value={(field.options ?? []).join(', ')}
-                    onChange={(event) => patchField(index, { options: event.target.value.split(',') })}
+                    onChange={(event) =>
+                      patchField(index, { options: event.target.value.split(',') })
+                    }
                     placeholder="leave blank for a free box"
                   />
                 </label>
@@ -259,22 +316,51 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
     )
   }
 
-  if (fields.length === 0) {
+  // --- choosing a form ---------------------------------------------------
+
+  if (openForm === null) {
     return (
       <section className="card">
         <div className="card-head">
-          <h2>External Work</h2>
+          <h2>External work</h2>
+          <div className="head-actions">
+            <button type="button" className="button" onClick={startNewForm}>
+              New form
+            </button>
+          </div>
         </div>
-        <p className="muted">No form yet. Build one and records can be kept against it.</p>
-        <div className="row">
-          <button type="button" className="button" onClick={startDesigning}>
-            Create the form
-          </button>
-        </div>
+        {forms.length === 0 ? (
+          <p className="muted">No forms yet. Build one and records can be kept against it.</p>
+        ) : (
+          <div className="form-picker">
+            {forms.map((form) => {
+              const count = entries.filter((entry) => entry.form_id === form.id).length
+              const fieldCount = parseFields(form.fields).length
+              return (
+                <button
+                  key={form.id}
+                  type="button"
+                  className="form-choice"
+                  onClick={() => setOpenId(form.id)}
+                >
+                  <strong>{form.name}</strong>
+                  <span>
+                    {count} record{count === 1 ? '' : 's'}
+                  </span>
+                  <em>
+                    {fieldCount} field{fieldCount === 1 ? '' : 's'}
+                  </em>
+                </button>
+              )
+            })}
+          </div>
+        )}
         {error && <p className="err">{error}</p>}
       </section>
     )
   }
+
+  // --- one form's records ------------------------------------------------
 
   return (
     <>
@@ -287,19 +373,6 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
             </button>
           </div>
           <div className="form-grid">
-            <label>
-              Date
-              <input
-                type="date"
-                value={entryDate}
-                onChange={(event) => setEntryDate(event.target.value)}
-                required
-              />
-            </label>
-            <label>
-              Boiler
-              <BoilerSelect boilers={boilers} value={entryBoiler} onChange={setEntryBoiler} />
-            </label>
             {fields.map((field) => (
               <label key={field.key} className={field.type === 'textarea' ? 'field-wide' : undefined}>
                 {field.label}
@@ -327,11 +400,33 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
 
       <section className="card">
         <div className="card-head">
-          <h2>External work</h2>
+          <h2>{openForm.name}</h2>
           <div className="head-actions">
-            <span className="count">{entries.length}</span>
-            <button type="button" className="button ghost" onClick={startDesigning}>
+            <span className="count">{formEntries.length}</span>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={() => {
+                setOpenId(null)
+                setEntryOpen(false)
+                setError('')
+              }}
+            >
+              All forms
+            </button>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={() => startEditingForm(openForm)}
+            >
               Edit form
+            </button>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={() => void removeForm(openForm)}
+            >
+              Delete form
             </button>
             {!entryOpen && (
               <button type="button" className="button" onClick={startEntry}>
@@ -340,15 +435,13 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
             )}
           </div>
         </div>
-        {entries.length === 0 ? (
+        {formEntries.length === 0 ? (
           <p className="muted">Nothing recorded yet.</p>
         ) : (
           <div className="table-wrap">
             <table className="ledger">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Boiler</th>
                   {fields.map((field) => (
                     <th key={field.key}>{field.label}</th>
                   ))}
@@ -356,16 +449,10 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => {
+                {formEntries.map((entry) => {
                   const values = parseValues(entry.answers)
                   return (
                     <tr key={entry.id}>
-                      <td className="nowrap" data-label="Date">
-                        {showDate(entry.date)}
-                      </td>
-                      <td className="nowrap" data-label="Boiler">
-                        {entry.boiler_id === null ? '—' : boilerLabel(byId.get(entry.boiler_id))}
-                      </td>
                       {fields.map((field) => (
                         <td key={field.key} className="wrap" data-label={field.label}>
                           {showValue(field, values[field.key])}
