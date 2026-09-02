@@ -252,6 +252,33 @@ export type CleaningDueResponse = {
   items: CleaningDueItem[]
 }
 
+/** A field on the external-work form, as designed in the app. */
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'yesno' | 'choice'
+
+export type FormField = {
+  /** Stable identifier a record's values are keyed by; survives a relabel. */
+  key: string
+  label: string
+  type: FormFieldType
+  /** Only for 'choice'. */
+  options?: string[]
+  required?: boolean
+}
+
+export type ExternalWorkForm = Timestamps & {
+  name: string
+  /** JSON array of FormField. */
+  fields: string
+}
+
+export type ExternalWorkEntry = Timestamps & {
+  date: string
+  boiler_id: number | null
+  form_id: number | null
+  /** JSON object keyed by FormField.key. */
+  answers: string
+}
+
 export type MaintenanceEntry = Timestamps & {
   date: string
   job_no: string

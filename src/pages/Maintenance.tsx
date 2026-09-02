@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { annualServicesApi, maintenanceApi, maintenancePartsApi } from '../api/client'
 import type { AnnualService, MaintenanceEntry, MaintenancePart } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
+import { ExternalWork } from '../components/ExternalWork'
 import { RecordPage } from '../components/RecordPage'
 import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
@@ -65,12 +66,7 @@ export function Maintenance() {
       )}
 
       {showing === 'external' ? (
-        <section className="card">
-          <div className="card-head">
-            <h2>External Work</h2>
-          </div>
-          <p className="muted">Not set up yet.</p>
-        </section>
+        <ExternalWork boilers={boilers} byId={byId} />
       ) : (
         <>
           {!selectedId && <p className="muted">Choose a boiler to see and add its records.</p>}

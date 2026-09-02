@@ -1051,6 +1051,58 @@ textarea {
   }
 }
 
+/* ---------- designing the external-work form ---------- */
+
+.field-builder {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.field-builder li {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--card-line);
+}
+
+.field-builder li:last-child {
+  border-bottom: 0;
+}
+
+.field-builder-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.field-builder-row label {
+  margin-bottom: 0;
+}
+
+.field-builder-row .toolbar-toggle {
+  padding-bottom: 0.6rem;
+}
+
+.field-builder-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-bottom: 0.6rem;
+}
+
+@media (max-width: 720px) {
+  /* Four columns of controls do not fit; each field becomes its own block. */
+  .field-builder-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .field-builder-actions {
+    padding-bottom: 0;
+    padding-top: 0.2rem;
+  }
+}
+
 /* ---------- record viewer ---------- */
 
 .modal-backdrop {

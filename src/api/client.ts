@@ -9,6 +9,8 @@ import type {
   DeleteResponse,
   DocumentEntry,
   EarningEntry,
+  ExternalWorkEntry,
+  ExternalWorkForm,
   FuelBatch,
   FuelConsumption,
   FuelDelivery,
@@ -181,6 +183,8 @@ export const fuelConsumptionApi = resource<FuelConsumption>('/api/fuel-consumpti
 export const cleaningApi = resource<CleaningEntry>('/api/cleaning')
 export const maintenanceApi = resource<MaintenanceEntry>('/api/maintenance')
 export const maintenancePartsApi = resource<MaintenancePart>('/api/maintenance-parts')
+export const externalWorkFormsApi = resource<ExternalWorkForm>('/api/external-work-forms')
+export const externalWorkApi = resource<ExternalWorkEntry>('/api/external-work')
 export const annualServicesApi = resource<AnnualService>('/api/annual-services')
 export const meterReadingsApi = resource<MeterReading>('/api/meter-readings')
 export const earningsApi = resource<EarningEntry>('/api/earnings')
