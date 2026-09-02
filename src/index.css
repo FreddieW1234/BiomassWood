@@ -1177,6 +1177,48 @@ textarea {
   }
 }
 
+/* Choosing what carries over when a record is duplicated. */
+.copy-list {
+  list-style: none;
+  margin: 0.4rem 0 1rem;
+  padding: 0;
+}
+
+.copy-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #efece2;
+}
+
+.copy-list li:last-child {
+  border-bottom: 0;
+}
+
+.copy-list .toolbar-toggle {
+  margin: 0;
+  flex: none;
+}
+
+/* The answer that would carry over, trimmed so a long one cannot push the
+   dialog wide. */
+.copy-value {
+  min-width: 0;
+  text-align: right;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-value.blank {
+  font-style: italic;
+  color: var(--muted);
+}
+
 /* ---------- record viewer ---------- */
 
 .modal-backdrop {

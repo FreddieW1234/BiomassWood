@@ -47,6 +47,9 @@ export function ExternalWork() {
   const [entryOpen, setEntryOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [entryValues, setEntryValues] = useState<Record<string, AnswerValue>>({})
+  const [copying, setCopying] = useState<{ entry: ExternalWorkEntry; keep: Set<string> } | null>(
+    null,
+  )
 
   const openForm = openId === null ? null : (forms.find((f) => f.id === openId) ?? null)
   const fields = useMemo(() => parseFields(openForm?.fields ?? ''), [openForm])
@@ -265,6 +268,31 @@ export function ExternalWork() {
     } finally {
       setSaving(false)
     }
+  }
+
+  function startCopy(entry: ExternalWorkEntry) {
+    // Everything carries over by default; a duplicate is normally mostly the
+    // same record, and it is quicker to clear the few that change.
+    setCopying({ entry, keep: new Set(fields.map((field) => field.key)) })
+    setError('')
+  }
+
+  function makeCopy() {
+    if (!copying) return
+    const source = parseValues(copying.entry.answers)
+    const next: Record<string, AnswerValue> = {}
+    for (const field of fields) {
+      if (!copying.keep.has(field.key)) continue
+      const value = source[field.key]
+      if (value === undefined) continue
+      // A section's repeats are cloned, not shared, or editing the copy would
+      // reach back into the record it came from.
+      next[field.key] = Array.isArray(value) ? value.map((row) => ({ ...row })) : value
+    }
+    setEditingId(null)
+    setEntryValues(next)
+    setCopying(null)
+    setEntryOpen(true)
   }
 
   async function removeEntry(id: number) {
@@ -551,6 +579,13 @@ export function ExternalWork() {
                         </button>
                         <button
                           type="button"
+                          className="text-button"
+                          onClick={() => startCopy(entry)}
+                        >
+                          Duplicate
+                        </button>
+                        <button
+                          type="button"
                           className="text-button danger"
                           onClick={() => void removeEntry(entry.id)}
                         >
@@ -566,6 +601,85 @@ export function ExternalWork() {
         )}
         {error && <p className="err">{error}</p>}
       </section>
+
+      {copying && (
+        <div className="modal-backdrop" onClick={() => setCopying(null)}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="card-head">
+              <h2>Duplicate record</h2>
+              <button type="button" className="text-button" onClick={() => setCopying(null)}>
+                Close
+              </button>
+            </div>
+            <p className="muted">
+              Ticked answers carry over. Anything unticked starts blank on the copy, ready to fill
+              in.
+            </p>
+
+            <div className="row">
+              <button
+                type="button"
+                className="text-button"
+                onClick={() =>
+                  setCopying((current) =>
+                    current ? { ...current, keep: new Set(fields.map((f) => f.key)) } : current,
+                  )
+                }
+              >
+                Tick all
+              </button>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() =>
+                  setCopying((current) => (current ? { ...current, keep: new Set() } : current))
+                }
+              >
+                Tick none
+              </button>
+            </div>
+
+            <ul className="copy-list">
+              {fields.map((field) => {
+                const kept = copying.keep.has(field.key)
+                const value = parseValues(copying.entry.answers)[field.key]
+                return (
+                  <li key={field.key}>
+                    <label className="toolbar-toggle">
+                      <input
+                        type="checkbox"
+                        checked={kept}
+                        onChange={(event) =>
+                          setCopying((current) => {
+                            if (!current) return current
+                            const keep = new Set(current.keep)
+                            if (event.target.checked) keep.add(field.key)
+                            else keep.delete(field.key)
+                            return { ...current, keep }
+                          })
+                        }
+                      />
+                      {field.label}
+                    </label>
+                    <span className={kept ? 'copy-value' : 'copy-value blank'}>
+                      {kept ? showValue(field, value) : 'left blank'}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+
+            <div className="row">
+              <button type="button" className="button" onClick={makeCopy}>
+                Create copy
+              </button>
+              <button type="button" className="button ghost" onClick={() => setCopying(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
