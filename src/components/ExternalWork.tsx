@@ -13,6 +13,23 @@ import {
   typeLabel,
 } from '../lib/formFields'
 
+/**
+ * What to call a copy of a form. A year in the name is the reason these get
+ * duplicated at all, so bump it; otherwise fall back to "copy". Either way the
+ * name is offered, not imposed -- the designer opens with it selected to change.
+ */
+function copiedName(name: string, taken: string[]) {
+  const year = name.match(/(?:19|20)\d{2}/)
+  const base = year ? name.replace(year[0], String(Number(year[0]) + 1)) : `${name} copy`
+  let candidate = base
+  let n = 2
+  while (taken.includes(candidate)) {
+    candidate = `${base} ${n}`
+    n += 1
+  }
+  return candidate
+}
+
 function blankField(taken: string[]): FormField {
   return { key: fieldKey('field', taken), label: '', type: 'text' }
 }
@@ -42,6 +59,8 @@ export function ExternalWork() {
   const [openId, setOpenId] = useState<number | null>(null)
   const [designingId, setDesigningId] = useState<number | 'new' | null>(null)
   const [draftName, setDraftName] = useState('')
+  /** The form a copy came from, so the designer can say so. */
+  const [copiedFrom, setCopiedFrom] = useState<string | null>(null)
   const [draft, setDraft] = useState<FormField[]>([])
 
   const [entryOpen, setEntryOpen] = useState(false)
@@ -113,13 +132,30 @@ export function ExternalWork() {
   // --- designing a form --------------------------------------------------
 
   function startNewForm() {
+    setCopiedFrom(null)
     setDraftName('')
     setDraft([blankField([])])
     setDesigningId('new')
     setError('')
   }
 
+  /** Open the designer on a copy of a form, so it can be renamed before it exists. */
+  function startDuplicateForm(form: ExternalWorkForm) {
+    setCopiedFrom(form.name)
+    setDraftName(copiedName(form.name, forms.map((f) => f.name)))
+    // Cloned, so editing the copy in the designer cannot reach into the original.
+    setDraft(
+      parseFields(form.fields).map((field) => ({
+        ...field,
+        ...(field.fields ? { fields: field.fields.map((sub) => ({ ...sub })) } : {}),
+      })),
+    )
+    setDesigningId('new')
+    setError('')
+  }
+
   function startEditingForm(form: ExternalWorkForm) {
+    setCopiedFrom(null)
     const existing = parseFields(form.fields)
     setDraftName(form.name)
     setDraft(existing.length > 0 ? existing : [blankField([])])
@@ -351,7 +387,13 @@ export function ExternalWork() {
     return (
       <section className="card">
         <div className="card-head">
-          <h2>{designingId === 'new' ? 'New form' : 'Edit form'}</h2>
+          <h2>
+            {designingId !== 'new'
+              ? 'Edit form'
+              : copiedFrom
+                ? `Copy of ${copiedFrom}`
+                : 'New form'}
+          </h2>
           <button type="button" className="text-button" onClick={() => setDesigningId(null)}>
             Close
           </button>
@@ -570,6 +612,13 @@ export function ExternalWork() {
               onClick={() => startEditingForm(openForm)}
             >
               Edit form
+            </button>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={() => startDuplicateForm(openForm)}
+            >
+              Duplicate form
             </button>
             <button
               type="button"
