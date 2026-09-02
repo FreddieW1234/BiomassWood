@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { ExportCsv } from './ExportCsv'
 import type { Resource } from '../api/client'
 import { useLedger } from '../hooks/useLedger'
 import { recordLabel } from '../lib/format'
@@ -47,6 +48,12 @@ type Props<T extends { id: number }> = {
   toPayload?: (form: Record<string, string>) => Record<string, unknown>
   /** Render inside an existing page (a tab) rather than as a page of its own. */
   embedded?: boolean
+  /**
+   * Offer a CSV of what is on screen, named after this. The columns on offer
+   * are the record's own fields, so a value that is not on the table -- an
+   * accreditation date, say -- can still be exported.
+   */
+  exportName?: string
 }
 
 export function RecordPage<T extends { id: number }>({
@@ -65,6 +72,7 @@ export function RecordPage<T extends { id: number }>({
   onSaved,
   toPayload,
   embedded,
+  exportName,
 }: Props<T>) {
   const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm, toPayload })
   const [formOpen, setFormOpen] = useState(false)
@@ -103,6 +111,13 @@ export function RecordPage<T extends { id: number }>({
         )}
         <div className="head-actions">
           {toolbar}
+          {exportName && (
+            <ExportCsv
+              name={exportName}
+              rows={rows}
+              columns={fields.map((field) => ({ key: field.name, label: field.label }))}
+            />
+          )}
           {!formOpen && (
             <button type="button" className="button" onClick={() => setFormOpen(true)}>
               New record

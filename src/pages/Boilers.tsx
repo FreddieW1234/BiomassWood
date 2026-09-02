@@ -56,6 +56,7 @@ export function Boilers() {
       title="Boilers"
       tableTitle="Register"
       api={boilersApi}
+      exportName="boilers"
       transformItems={(items) =>
         sortBoilers(showSold ? items : items.filter((b) => b.status !== 'SOLD_TRANSFERRED'))
       }
