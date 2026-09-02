@@ -1118,6 +1118,52 @@ textarea {
   }
 }
 
+/* A repeating section in the designer: its own fields, indented under it. */
+.field-group {
+  background: #faf8f2;
+  border: 1px solid var(--card-line);
+  border-radius: 9px;
+  padding: 0.8rem 0.9rem;
+  margin: 0.6rem 0;
+}
+
+.field-group > .field-builder {
+  margin: 0 0 0.4rem 1rem;
+  border-left: 2px solid var(--card-line);
+  padding-left: 1rem;
+}
+
+/* One filled-in repeat: appliance 1, appliance 2, ... */
+.repeat-row {
+  border: 1px solid var(--card-line);
+  border-radius: 9px;
+  padding: 0.7rem 0.9rem 0.2rem;
+  margin-bottom: 0.7rem;
+}
+
+.repeat-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.repeat-no {
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .field-group > .field-builder {
+    margin-left: 0;
+    padding-left: 0.6rem;
+  }
+}
+
 /* ---------- record viewer ---------- */
 
 .modal-backdrop {

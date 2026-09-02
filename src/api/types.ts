@@ -253,7 +253,15 @@ export type CleaningDueResponse = {
 }
 
 /** A field on the external-work form, as designed in the app. */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'yesno' | 'choice'
+export type FormFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'date'
+  | 'yesno'
+  | 'choice'
+  /** A block of fields that repeats: one appliance, then the next. */
+  | 'group'
 
 export type FormField = {
   /** Stable identifier a record's values are keyed by; survives a relabel. */
@@ -263,7 +271,12 @@ export type FormField = {
   /** Only for 'choice'. */
   options?: string[]
   required?: boolean
+  /** Only for 'group': the fields that repeat. Groups do not nest. */
+  fields?: FormField[]
 }
+
+/** A leaf answer, or one entry per repeat for a group. */
+export type AnswerValue = string | Record<string, string>[]
 
 export type ExternalWorkForm = Timestamps & {
   name: string

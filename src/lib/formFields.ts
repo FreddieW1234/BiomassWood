@@ -1,4 +1,4 @@
-import type { FormField, FormFieldType } from '../api/types'
+import type { AnswerValue, FormField, FormFieldType } from '../api/types'
 
 export const FIELD_TYPES: { id: FormFieldType; label: string }[] = [
   { id: 'text', label: 'Text' },
@@ -7,6 +7,7 @@ export const FIELD_TYPES: { id: FormFieldType; label: string }[] = [
   { id: 'date', label: 'Date' },
   { id: 'yesno', label: 'Yes / No' },
   { id: 'choice', label: 'Choice' },
+  { id: 'group', label: 'Repeats' },
 ]
 
 /**
@@ -81,22 +82,49 @@ export function parseFields(raw: string): FormField[] {
   }
 }
 
-export function parseValues(raw: string): Record<string, string> {
+export function parseValues(raw: string): Record<string, AnswerValue> {
   if (!raw) return {}
   try {
     const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {}
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, AnswerValue>) : {}
   } catch {
     return {}
   }
 }
 
+/** A leaf answer as text, whatever was stored under it. */
+export function leafValue(value: AnswerValue | undefined) {
+  return typeof value === 'string' ? value : ''
+}
+
+/** The repeats held under a group field. */
+export function groupRows(value: AnswerValue | undefined): Record<string, string>[] {
+  return Array.isArray(value) ? value : []
+}
+
+function showDateish(value: string) {
+  const [year, month, day] = value.split('-')
+  return year && month && day ? `${day}/${month}/${year}` : value
+}
+
 /** What a value should read as in the table. */
-export function showValue(field: FormField, value: string | undefined) {
-  if (value === undefined || value === '') return '—'
-  if (field.type === 'date') {
-    const [year, month, day] = value.split('-')
-    return year && month && day ? `${day}/${month}/${year}` : value
+export function showValue(field: FormField, value: AnswerValue | undefined): string {
+  if (field.type === 'group') {
+    const rows = groupRows(value)
+    if (rows.length === 0) return '—'
+    // One repeat per line, in the order the group's own fields are in.
+    return rows
+      .map((row) =>
+        (field.fields ?? [])
+          .map((sub) => (sub.type === 'date' ? showDateish(row[sub.key] ?? '') : (row[sub.key] ?? '')))
+          .filter(Boolean)
+          .join(' · '),
+      )
+      .filter(Boolean)
+      .join(' / ')
   }
-  return value
+  const text = leafValue(value)
+  if (text === '') return '—'
+  if (field.type === 'date') return showDateish(text)
+  return text
 }
