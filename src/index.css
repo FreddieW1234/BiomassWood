@@ -153,14 +153,12 @@ p {
   padding: 0 0.4rem;
 }
 
-/* Sits above the signed-in name, separated from it so it reads as a switch on
+/* Sits above the signed-in name, separated from it so it reads as a setting on
    the app rather than something to do with the account. */
-.sold-switch {
+.as-of {
   display: flex;
-  /* The base label rule stacks its contents; this one reads as a single line. */
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
   margin: 0 0 0.9rem;
   padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--forest-line);
@@ -168,21 +166,34 @@ p {
   letter-spacing: normal;
   text-transform: none;
   color: #a9b6a9;
-  cursor: pointer;
 }
 
-.sold-switch:hover {
+.as-of input[type='date'] {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.86rem;
+  color: var(--paper);
+  background: #1c2f22;
+  border: 1px solid var(--forest-line);
+  border-radius: 6px;
+  /* The native picker glyph is near-black on this background. */
+  color-scheme: dark;
+}
+
+.as-of .text-button {
+  align-self: flex-start;
+  color: #7d8a7e;
+  font-size: 0.78rem;
+}
+
+.as-of .text-button:hover {
   color: var(--paper);
 }
 
-.sold-switch input[type='checkbox'] {
-  width: 17px;
-  height: 17px;
-  margin: 0;
-  padding: 0;
-  flex: none;
-  accent-color: var(--moss);
-  cursor: pointer;
+.as-of em {
+  font-style: normal;
+  font-size: 0.76rem;
+  color: #7d8a7e;
 }
 
 .status-pill {

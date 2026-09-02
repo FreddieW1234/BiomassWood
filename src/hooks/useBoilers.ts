@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { boilersApi } from '../api/client'
 import type { Boiler } from '../api/types'
-import { isSold } from '../components/BoilerSelect'
-import { useSoldBoilers } from '../context/SoldBoilersContext'
-import { boilerMap, sortBoilers } from '../lib/format'
+import { useBoilerDate } from '../context/BoilerDateContext'
+import { boilerMap, ownedOn, sortBoilers } from '../lib/format'
 
 /**
  * `boilers` is every boiler on the register, which is what a picker needs so a
  * historic record can still name the boiler it was written against. `visible`
- * respects the sidebar's sold-boilers switch, and is what a list should show.
+ * is those still owned on the sidebar's date, and is what a list should show.
  */
 export function useBoilers() {
   const [boilers, setBoilers] = useState<Boiler[]>([])
   const [loaded, setLoaded] = useState(false)
-  const { showSold } = useSoldBoilers()
+  const { asOf } = useBoilerDate()
 
   useEffect(() => {
     let cancelled = false
@@ -35,8 +34,8 @@ export function useBoilers() {
 
   const byId = useMemo(() => boilerMap(boilers), [boilers])
   const visible = useMemo(
-    () => (showSold ? boilers : boilers.filter((boiler) => !isSold(boiler))),
-    [boilers, showSold],
+    () => boilers.filter((boiler) => ownedOn(boiler, asOf)),
+    [boilers, asOf],
   )
   return { boilers, visible, byId, loaded }
 }

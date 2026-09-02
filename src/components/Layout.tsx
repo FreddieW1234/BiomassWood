@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useConnection } from '../context/ConnectionContext'
-import { useSoldBoilers } from '../context/SoldBoilersContext'
+import { useBoilerDate } from '../context/BoilerDateContext'
 
 function statusKind(connected: boolean, error: string | null) {
   if (error) return 'down'
@@ -13,7 +13,7 @@ function statusKind(connected: boolean, error: string | null) {
 export function Layout() {
   const { health, lastError, lastMs, checking, ping } = useConnection()
   const { user, isAdmin, signOut } = useAuth()
-  const { showSold, setShowSold } = useSoldBoilers()
+  const { asOf, setAsOf } = useBoilerDate()
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
 
@@ -102,15 +102,19 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-foot">
-          {/* Sold boilers are most of the register and none of the day job, so
-              this is a switch on the whole app rather than one page's filter. */}
-          <label className="sold-switch">
-            <input
-              type="checkbox"
-              checked={showSold}
-              onChange={(event) => setShowSold(event.target.checked)}
-            />
-            Show sold boilers
+          {/* Which boilers the whole app shows: those still ours on this date.
+              A date rather than a tickbox, because the records wanted for 2022
+              are the ones for the boilers owned in 2022, sold since or not. */}
+          <label className="as-of">
+            <span>Boilers as of</span>
+            <input type="date" value={asOf} onChange={(event) => setAsOf(event.target.value)} />
+            {asOf ? (
+              <button type="button" className="text-button" onClick={() => setAsOf('')}>
+                Show all
+              </button>
+            ) : (
+              <em>showing every boiler ever</em>
+            )}
           </label>
 
           <div className="signed-in">

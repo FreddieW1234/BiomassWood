@@ -1,5 +1,6 @@
 import type { Boiler } from '../api/types'
-import { useSoldBoilers } from '../context/SoldBoilersContext'
+import { useBoilerDate } from '../context/BoilerDateContext'
+import { ownedOn } from '../lib/format'
 
 type Props = {
   boilers: Boiler[]
@@ -13,12 +14,12 @@ export function isSold(boiler: Boiler) {
 }
 
 export function BoilerSelect({ boilers, value, onChange, required }: Props) {
-  const { showSold } = useSoldBoilers()
-  // Hiding sold boilers must never hide the one a record already points at,
+  const { asOf } = useBoilerDate()
+  // Narrowing the register must never hide the one a record already points at,
   // or editing an old entry would silently change which boiler it belongs to.
-  const listed = showSold
-    ? boilers
-    : boilers.filter((boiler) => !isSold(boiler) || String(boiler.id) === value)
+  const listed = boilers.filter(
+    (boiler) => ownedOn(boiler, asOf) || String(boiler.id) === value,
+  )
 
   return (
     <select

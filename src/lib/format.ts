@@ -53,6 +53,16 @@ export function boilerLabel(boiler: Boiler | undefined | null) {
 // Boiler numbers are text and have gaps. Sort them as numbers, with No. 33
 // (the boiler relocated from Fforestfach) sitting next to No. 3 where it
 // physically belongs. Anything non-numeric sorts last.
+/**
+ * Was this boiler still ours on that date? A blank date means every boiler
+ * that has ever been on the register.
+ */
+export function ownedOn(boiler: Boiler, asOf: string) {
+  if (!asOf) return true
+  const gone = (boiler.sold_on || boiler.decommissioned_on || '').trim()
+  return !gone || gone >= asOf
+}
+
 export function boilerSortKey(number: string) {
   if (number === '33') return 3.5
   const parsed = Number.parseInt(number, 10)

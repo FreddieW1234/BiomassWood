@@ -1,9 +1,9 @@
 import { boilersApi, hoppersApi, sitesApi } from '../api/client'
 import type { Boiler } from '../api/types'
 import { RecordPage } from '../components/RecordPage'
-import { useSoldBoilers } from '../context/SoldBoilersContext'
+import { useBoilerDate } from '../context/BoilerDateContext'
 import { useList } from '../hooks/useList'
-import { idValue, sortBoilers } from '../lib/format'
+import { idValue, ownedOn, sortBoilers } from '../lib/format'
 import { BOILER_STATUSES, FUEL_TYPES, MANUFACTURERS, fuelLabel, statusLabel } from '../lib/options'
 
 const empty = () => ({
@@ -48,8 +48,8 @@ const empty = () => ({
 export function Boilers() {
   const { items: sites } = useList(sitesApi)
   const { items: hoppers } = useList(hoppersApi)
-  // Sold boilers are switched on and off for the whole app from the sidebar.
-  const { showSold } = useSoldBoilers()
+  // Which boilers the whole app is looking at is set from the sidebar.
+  const { asOf } = useBoilerDate()
 
   return (
     <RecordPage<Boiler>
@@ -57,9 +57,7 @@ export function Boilers() {
       tableTitle="Register"
       api={boilersApi}
       exportName="boilers"
-      transformItems={(items) =>
-        sortBoilers(showSold ? items : items.filter((b) => b.status !== 'SOLD_TRANSFERRED'))
-      }
+      transformItems={(items) => sortBoilers(items.filter((b) => ownedOn(b, asOf)))}
       empty={empty}
       toForm={(b) => ({
         number: b.number,
