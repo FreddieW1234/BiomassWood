@@ -330,6 +330,12 @@ export function ExternalWork() {
               />
               {field.type === 'group' && (
                 <>
+                  <p className="section-hint">
+                    The fields below are filled in <strong>once for each</strong>{' '}
+                    {field.label.trim() || 'one'}, so describe a single one rather than the group.
+                    {(field.fields ?? []).every((sub) => !sub.label.trim()) &&
+                      ' Serial number, output, who did it — that sort of thing.'}
+                  </p>
                   <ul className="field-builder">
                     {(field.fields ?? []).map((sub, subIndex) => (
                       <li key={sub.key}>
@@ -596,11 +602,11 @@ function FieldRow({
         <input
           value={field.label}
           onChange={(event) => onPatch({ label: event.target.value })}
-          placeholder={repeats ? 'e.g. Appliance' : 'e.g. Serial number'}
+          placeholder={repeats ? 'e.g. Appliance — name one of them' : 'e.g. Serial number'}
         />
       </label>
       {repeats ? (
-        <span className="field-note">filled in once per {field.label.trim() || 'entry'}</span>
+        <span />
       ) : (
         <label>
           Choices, separated by commas
