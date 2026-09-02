@@ -1312,18 +1312,6 @@ textarea {
   box-shadow: inset 0 0 0 1px #e5b8ab;
 }
 
-/* The RHI year already running when the records start. Blank for every boiler,
-   so it is shown as absence of evidence rather than a missed service. */
-.cover-band.before {
-  background: repeating-linear-gradient(
-    45deg,
-    #eeeae0,
-    #eeeae0 4px,
-    #e3ddcd 4px,
-    #e3ddcd 8px
-  );
-}
-
 .cover-band.open {
   background: var(--moss-soft);
   box-shadow: inset 0 0 0 1px #cfe0d3;
@@ -1371,7 +1359,6 @@ textarea {
 .cover-swatch.covered { background: var(--moss); }
 .cover-swatch.gap { background: #eec9be; box-shadow: inset 0 0 0 1px #e5b8ab; }
 .cover-swatch.open { background: var(--moss-soft); box-shadow: inset 0 0 0 1px #cfe0d3; }
-.cover-swatch.before { background: #e3ddcd; }
 
 @media (max-width: 720px) {
   .cover-axis,

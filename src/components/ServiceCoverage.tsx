@@ -19,13 +19,15 @@ function daysBetween(from: string, to: string) {
   return Math.round((Date.parse(to) - Date.parse(from)) / 86400000)
 }
 
-type Window = { from: string; to: string; covered: string | null }
+type Window = { from: string; to: string; covered: string | null; partial: boolean }
 
 type Row = {
   boiler: Boiler
   windows: Window[]
   coveredTo: string | null
   gaps: number
+  /** The day the boiler went, if it has. */
+  until: string
 }
 
 /**
@@ -88,20 +90,30 @@ export function ServiceCoverage({
       const accredited = (boiler.accredited_on || '').trim()
       if (!accredited) continue
 
+      const gone = (boiler.sold_on || boiler.decommissioned_on || '').trim()
+      // Sold before the picture begins: there is no year here to judge.
+      if (gone && gone < START) continue
+
       // The anniversary on or before the start of the picture.
       let from = accredited
       while (addYears(from, 1) <= START) from = addYears(from, 1)
 
-      // A boiler that has gone stops needing cover.
-      const finished = (boiler.sold_on || boiler.decommissioned_on || '').trim()
-      const horizon = finished || addYears(today, 1)
+      // A boiler that has gone stops needing cover. Otherwise the last year
+      // worth drawing is the one running now: a year that has not started
+      // cannot be covered or missed, and drawing it stretched the picture a
+      // year past anything it could say.
+      const finished = gone
+      const horizon = finished && finished < today ? finished : today
 
       const dates = services.get(boiler.number) ?? []
       const windows: Window[] = []
-      while (from < horizon) {
+      while (from <= horizon) {
         const to = addYears(from, 1)
         const inside = dates.filter((d) => d >= from && d < to).sort()
-        windows.push({ from, to, covered: inside[0] ?? null })
+        // The year a boiler was sold part-way through was never a full RHI
+        // year, so a blank one is not a gap.
+        const partial = Boolean(finished && finished < to)
+        windows.push({ from, to, covered: inside[0] ?? null, partial })
         if (to > end && !finished) end = to
         from = to
       }
@@ -110,10 +122,12 @@ export function ServiceCoverage({
       rows.push({
         boiler,
         windows,
+        until: finished,
         coveredTo: last ? last.to : null,
-        // The first window runs before the records begin and is blank for every
-        // boiler, so it is not a gap to chase. Nor is a year still running.
-        gaps: windows.slice(1).filter((w) => !w.covered && w.to <= today).length,
+        // Every completed RHI year with no service counts, including the one
+        // running when the records begin. A year still going, or one cut short
+        // by a sale, was never a full year to miss.
+        gaps: windows.filter((w) => !w.covered && !w.partial && w.to <= today).length,
       })
     }
     return { rows, end }
@@ -153,7 +167,6 @@ export function ServiceCoverage({
             <i className="cover-swatch covered" /> serviced
             <i className="cover-swatch gap" /> gap
             <i className="cover-swatch open" /> year still running
-            <i className="cover-swatch before" /> before records
           </span>
         </div>
       </div>
@@ -194,25 +207,26 @@ export function ServiceCoverage({
                 {years.map((year) => (
                   <span key={year} className="cover-rule" style={{ left: left(year) }} />
                 ))}
-                {row.windows.map((w, index) => {
+                {row.windows.map((w) => {
+                  // The band stops where the boiler did, not at a year end it
+                  // never reached.
+                  const until = row.until && row.until < w.to ? row.until : w.to
                   const kind = w.covered
                     ? 'covered'
-                    : index === 0
-                      ? 'before'
-                      : w.to > today
-                        ? 'open'
-                        : 'gap'
+                    : w.partial || w.to > today
+                      ? 'open'
+                      : 'gap'
                   return (
                     <span
                       key={w.from}
                       className={`cover-band ${kind}`}
-                      style={{ left: left(w.from), width: width(w.from, w.to) }}
+                      style={{ left: left(w.from), width: width(w.from, until) }}
                       title={
-                        `${showDate(w.from)} to ${showDate(w.to)} — ` +
+                        `${showDate(w.from)} to ${showDate(until)} — ` +
                         (w.covered
                           ? `serviced ${showDate(w.covered)}`
-                          : kind === 'before'
-                            ? 'before the records begin'
+                          : w.partial
+                            ? 'part year, boiler sold'
                             : kind === 'open'
                               ? 'not yet serviced'
                               : 'no service')
@@ -222,7 +236,13 @@ export function ServiceCoverage({
                 })}
                 <span className="cover-today" style={{ left: left(today) }} title={`Today, ${showDate(today)}`} />
               </div>
-              <span className={`cover-until${row.coveredTo && row.coveredTo > today ? '' : ' short'}`}>
+              <span
+                className={`cover-until${
+                  // For a boiler that has gone, cover mattered up to the day it
+                  // went; for one still running, up to today.
+                  row.coveredTo && row.coveredTo > (row.until || today) ? '' : ' short'
+                }`}
+              >
                 {row.coveredTo ? showDate(row.coveredTo) : '—'}
               </span>
             </div>
