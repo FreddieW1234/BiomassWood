@@ -1070,9 +1070,20 @@ textarea {
 
 .field-builder-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) auto auto auto;
   gap: 0.9rem;
   align-items: end;
+}
+
+/* What the field name was read as -- shown rather than chosen, so the guess is
+   never a surprise. */
+.field-kind {
+  padding-bottom: 0.62rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .field-builder-row label {
@@ -1095,6 +1106,10 @@ textarea {
   .field-builder-row {
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  .field-kind {
+    padding-bottom: 0;
   }
 
   .field-builder-actions {

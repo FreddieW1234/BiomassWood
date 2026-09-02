@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { externalWorkApi, externalWorkFormsApi } from '../api/client'
-import type {
-  Boiler,
-  ExternalWorkEntry,
-  ExternalWorkForm,
-  FormField,
-  FormFieldType,
-} from '../api/types'
+import type { Boiler, ExternalWorkEntry, ExternalWorkForm, FormField } from '../api/types'
 import { BoilerSelect } from './BoilerSelect'
 import { boilerLabel, showDate, today } from '../lib/format'
-import { FIELD_TYPES, fieldKey, parseFields, parseValues, showValue } from '../lib/formFields'
+import { fieldKey, inferType, parseFields, parseValues, showValue, typeLabel } from '../lib/formFields'
 
 function blankField(taken: string[]): FormField {
   return { key: fieldKey('field', taken), label: '', type: 'text' }
@@ -87,13 +81,14 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
       // has never been saved gets a key from its label now.
       const known = fields.some((f) => f.key === field.key)
       const key = known ? field.key : fieldKey(label, cleaned.map((f) => f.key))
+      const options = (field.options ?? []).map((o) => o.trim()).filter(Boolean)
+      // The kind of box follows from the name, so nobody has to pick one.
+      const type = inferType(label, options.length > 0)
       cleaned.push({
         key,
         label,
-        type: field.type,
-        ...(field.type === 'choice'
-          ? { options: (field.options ?? []).map((o) => o.trim()).filter(Boolean) }
-          : {}),
+        type,
+        ...(type === 'choice' ? { options } : {}),
         ...(field.required ? { required: true } : {}),
       })
     }
@@ -179,8 +174,9 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
           </button>
         </div>
         <p className="muted">
-          Add the fields an external job needs to record. Renaming one keeps whatever has already
-          been entered against it; removing one hides its answers rather than deleting them.
+          Name the fields an external job needs to record; the kind of box each one gets follows
+          from its name. Give a field choices and it becomes a dropdown instead. Renaming a field
+          keeps whatever has already been entered against it.
         </p>
 
         <ul className="field-builder">
@@ -196,19 +192,12 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
                   />
                 </label>
                 <label>
-                  Type
-                  <select
-                    value={field.type}
-                    onChange={(event) =>
-                      patchField(index, { type: event.target.value as FormFieldType })
-                    }
-                  >
-                    {FIELD_TYPES.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
+                  Choices, separated by commas
+                  <input
+                    value={(field.options ?? []).join(', ')}
+                    onChange={(event) => patchField(index, { options: event.target.value.split(',') })}
+                    placeholder="leave blank for a free box"
+                  />
                 </label>
                 <label className="toolbar-toggle">
                   <input
@@ -218,6 +207,11 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
                   />
                   Required
                 </label>
+                <span className="field-kind">
+                  {field.label.trim()
+                    ? typeLabel(inferType(field.label, (field.options ?? []).some((o) => o.trim())))
+                    : ''}
+                </span>
                 <div className="field-builder-actions">
                   <button
                     type="button"
@@ -244,18 +238,6 @@ export function ExternalWork({ boilers, byId }: { boilers: Boiler[]; byId: Map<n
                   </button>
                 </div>
               </div>
-              {field.type === 'choice' && (
-                <label className="field-wide">
-                  Choices, one per line
-                  <textarea
-                    rows={3}
-                    value={(field.options ?? []).join('\n')}
-                    onChange={(event) =>
-                      patchField(index, { options: event.target.value.split('\n') })
-                    }
-                  />
-                </label>
-              )}
             </li>
           ))}
         </ul>
