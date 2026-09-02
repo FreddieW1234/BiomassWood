@@ -50,6 +50,7 @@ export function ExternalWork() {
   const [copying, setCopying] = useState<{ entry: ExternalWorkEntry; keep: Set<string> } | null>(
     null,
   )
+  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null)
 
   const openForm = openId === null ? null : (forms.find((f) => f.id === openId) ?? null)
   const fields = useMemo(() => parseFields(openForm?.fields ?? ''), [openForm])
@@ -57,6 +58,44 @@ export function ExternalWork() {
     () => entries.filter((entry) => entry.form_id === openId),
     [entries, openId],
   )
+
+  /**
+   * Records in the order asked for. Nothing is filed against a boiler here, so
+   * boiler numbers live in whatever column the form calls them -- which is why
+   * every column sorts rather than a fixed date/boiler switch.
+   */
+  const sortedEntries = useMemo(() => {
+    if (!sort) return formEntries
+    const field = fields.find((f) => f.key === sort.key)
+    if (!field) return formEntries
+    const flip = sort.dir === 'asc' ? 1 : -1
+    return [...formEntries].sort((a, b) => {
+      const left = showValue(field, parseValues(a.answers)[field.key])
+      const right = showValue(field, parseValues(b.answers)[field.key])
+      // Empty answers sit at the end whichever way round the sort is.
+      if (left === '—' && right === '—') return 0
+      if (left === '—') return 1
+      if (right === '—') return -1
+      if (field.type === 'number') return (Number(left) - Number(right)) * flip
+      if (field.type === 'date') {
+        // Shown as dd/mm/yyyy, so compare the parts rather than the text.
+        const asIso = (value: string) => value.split('/').reverse().join('-')
+        return asIso(left).localeCompare(asIso(right)) * flip
+      }
+      // Numeric-aware, so 1A, 1B, 2, 10 land in that order rather than 1A, 10, 1B, 2.
+      return left.localeCompare(right, 'en', { numeric: true, sensitivity: 'base' }) * flip
+    })
+  }, [formEntries, fields, sort])
+
+  function sortBy(key: string) {
+    setSort((current) =>
+      current?.key === key
+        ? current.dir === 'asc'
+          ? { key, dir: 'desc' }
+          : null
+        : { key, dir: 'asc' },
+    )
+  }
 
   const load = useCallback(() => {
     setLoading(true)
@@ -554,13 +593,23 @@ export function ExternalWork() {
               <thead>
                 <tr>
                   {fields.map((field) => (
-                    <th key={field.key}>{field.label}</th>
+                    <th key={field.key}>
+                      <button
+                        type="button"
+                        className="date-button"
+                        onClick={() => sortBy(field.key)}
+                        title={`Sort by ${field.label}`}
+                      >
+                        {field.label}
+                        {sort?.key === field.key && (sort.dir === 'asc' ? ' ↑' : ' ↓')}
+                      </button>
+                    </th>
                   ))}
                   <th />
                 </tr>
               </thead>
               <tbody>
-                {formEntries.map((entry) => {
+                {sortedEntries.map((entry) => {
                   const values = parseValues(entry.answers)
                   return (
                     <tr key={entry.id}>

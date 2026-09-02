@@ -38,12 +38,16 @@ export function Maintenance() {
         <div>
           <h1>Maintenance</h1>
         </div>
-        <div className="head-actions">
-          <label className="toolbar-toggle">
-            Boiler
-            <BoilerSelect boilers={boilers} value={boilerId} onChange={setBoilerId} required />
-          </label>
-        </div>
+        {/* External work is not filed against a boiler, so the picker would do
+            nothing there. */}
+        {showing === 'routine' && (
+          <div className="head-actions">
+            <label className="toolbar-toggle">
+              Boiler
+              <BoilerSelect boilers={boilers} value={boilerId} onChange={setBoilerId} required />
+            </label>
+          </div>
+        )}
       </div>
 
       {isAdmin && (
