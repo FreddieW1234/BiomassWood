@@ -3,6 +3,7 @@ import { annualServicesApi, maintenanceApi, maintenancePartsApi } from '../api/c
 import type { AnnualService, MaintenanceEntry, MaintenancePart } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
 import { RecordPage } from '../components/RecordPage'
+import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { figure, money, showDate, today } from '../lib/format'
 import { WORK_TYPES, YES_NO, YES_NO_PENDING } from '../lib/options'
@@ -15,10 +16,17 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'service', label: 'Annual service' },
 ]
 
+type Section = 'routine' | 'external'
+
 export function Maintenance() {
   const { boilers, byId } = useBoilers()
+  const { isAdmin } = useAuth()
   const [boilerId, setBoilerId] = useState('')
   const [tab, setTab] = useState<Tab>('log')
+  // External work is an admin's; staff go straight to the routine records and
+  // never see that there is a choice to make.
+  const [section, setSection] = useState<Section>('routine')
+  const showing: Section = isAdmin ? section : 'routine'
 
   const selectedId = Number(boilerId) || null
   const boiler = selectedId ? byId.get(selectedId) : undefined
@@ -37,26 +45,58 @@ export function Maintenance() {
         </div>
       </div>
 
-      {!selectedId && <p className="muted">Choose a boiler to see and add its records.</p>}
+      {isAdmin && (
+        <div className="view-switch tabs section-switch">
+          <button
+            type="button"
+            className={showing === 'routine' ? 'on' : ''}
+            onClick={() => setSection('routine')}
+          >
+            Routine
+          </button>
+          <button
+            type="button"
+            className={showing === 'external' ? 'on' : ''}
+            onClick={() => setSection('external')}
+          >
+            External Work
+          </button>
+        </div>
+      )}
 
-      {selectedId && (
-        <>
-          <div className="view-switch tabs">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={tab === item.id ? 'on' : ''}
-                onClick={() => setTab(item.id)}
-              >
-                {item.label}
-              </button>
-            ))}
+      {showing === 'external' ? (
+        <section className="card">
+          <div className="card-head">
+            <h2>External Work</h2>
           </div>
+          <p className="muted">Not set up yet.</p>
+        </section>
+      ) : (
+        <>
+          {!selectedId && <p className="muted">Choose a boiler to see and add its records.</p>}
 
-          {tab === 'log' && <RepairLog key={`log-${selectedId}`} boilerId={selectedId} title={boiler?.number} />}
-          {tab === 'parts' && <Parts key={`parts-${selectedId}`} boilerId={selectedId} />}
-          {tab === 'service' && <AnnualService_ key={`service-${selectedId}`} boilerId={selectedId} />}
+          {selectedId && (
+            <>
+              <div className="view-switch tabs">
+                {TABS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={tab === item.id ? 'on' : ''}
+                    onClick={() => setTab(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {tab === 'log' && (
+                <RepairLog key={`log-${selectedId}`} boilerId={selectedId} title={boiler?.number} />
+              )}
+              {tab === 'parts' && <Parts key={`parts-${selectedId}`} boilerId={selectedId} />}
+              {tab === 'service' && <AnnualService_ key={`service-${selectedId}`} boilerId={selectedId} />}
+            </>
+          )}
         </>
       )}
     </div>

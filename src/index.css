@@ -1030,6 +1030,27 @@ textarea {
   color: var(--paper, #fdfcf9);
 }
 
+/* The Routine / External Work switch sits above the per-boiler tabs, so it is
+   sized up to read as the outer choice rather than a second row of the same
+   thing. */
+.section-switch {
+  align-self: flex-start;
+  border-color: #cfc8b4;
+}
+
+.section-switch button {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.55rem 1.3rem;
+}
+
+@media (max-width: 720px) {
+  .section-switch button {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.5rem;
+  }
+}
+
 /* ---------- record viewer ---------- */
 
 .modal-backdrop {
