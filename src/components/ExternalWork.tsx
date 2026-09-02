@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { externalWorkApi, externalWorkFormsApi } from '../api/client'
 import type { AnswerValue, ExternalWorkEntry, ExternalWorkForm, FormField } from '../api/types'
 import { today } from '../lib/format'
+import { ServiceCoverage } from './ServiceCoverage'
 import {
   fieldKey,
   groupRows,
@@ -496,7 +497,8 @@ export function ExternalWork() {
 
   if (openForm === null) {
     return (
-      <section className="card">
+      <>
+        <section className="card">
         <div className="card-head">
           <h2>External work</h2>
           <div className="head-actions">
@@ -532,7 +534,10 @@ export function ExternalWork() {
           </div>
         )}
         {error && <p className="err">{error}</p>}
-      </section>
+        </section>
+
+        <ServiceCoverage forms={forms} entries={entries} />
+      </>
     )
   }
 

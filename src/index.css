@@ -1219,6 +1219,172 @@ textarea {
   color: var(--muted);
 }
 
+/* ---------- service coverage timeline ---------- */
+
+.cover-scroll {
+  overflow-x: auto;
+}
+
+.cover-grid {
+  min-width: 34rem;
+}
+
+.cover-axis,
+.cover-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr 6rem;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.cover-row {
+  padding: 0.18rem 0;
+}
+
+.cover-axis {
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
+  border-bottom: 1px solid var(--card-line);
+}
+
+.cover-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cover-gaps {
+  display: block;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+/* The band area. Everything inside is placed by percentage of the whole span,
+   so the picture rescales with the window rather than needing a fixed pixel
+   width per year. */
+.cover-track {
+  position: relative;
+  height: 1.15rem;
+}
+
+.cover-year {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.cover-rule {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--card-line);
+}
+
+.cover-band {
+  position: absolute;
+  top: 0.18rem;
+  bottom: 0.18rem;
+  border-radius: 3px;
+  /* A hairline so neighbouring years read as separate windows. */
+  box-shadow: inset -1px 0 0 var(--card);
+}
+
+.cover-band.covered {
+  background: var(--moss);
+}
+
+.cover-band.gap {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--rust-soft),
+    var(--rust-soft) 4px,
+    #eec9be 4px,
+    #eec9be 8px
+  );
+  box-shadow: inset 0 0 0 1px #e5b8ab;
+}
+
+/* The RHI year already running when the records start. Blank for every boiler,
+   so it is shown as absence of evidence rather than a missed service. */
+.cover-band.before {
+  background: repeating-linear-gradient(
+    45deg,
+    #eeeae0,
+    #eeeae0 4px,
+    #e3ddcd 4px,
+    #e3ddcd 8px
+  );
+}
+
+.cover-band.open {
+  background: var(--moss-soft);
+  box-shadow: inset 0 0 0 1px #cfe0d3;
+}
+
+.cover-today {
+  position: absolute;
+  top: -0.15rem;
+  bottom: -0.15rem;
+  width: 2px;
+  background: var(--ink);
+  opacity: 0.55;
+}
+
+.cover-until {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* Cover that has already run out is the thing to notice. */
+.cover-until.short {
+  color: var(--rust);
+  font-weight: 600;
+}
+
+.cover-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+}
+
+.cover-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-left: 0.5rem;
+}
+
+.cover-swatch.covered { background: var(--moss); }
+.cover-swatch.gap { background: #eec9be; box-shadow: inset 0 0 0 1px #e5b8ab; }
+.cover-swatch.open { background: var(--moss-soft); box-shadow: inset 0 0 0 1px #cfe0d3; }
+.cover-swatch.before { background: #e3ddcd; }
+
+@media (max-width: 720px) {
+  .cover-axis,
+  .cover-row {
+    grid-template-columns: 5rem 1fr 5.4rem;
+    gap: 0.5rem;
+  }
+
+  .cover-key {
+    flex-wrap: wrap;
+  }
+}
+
 /* ---------- record viewer ---------- */
 
 .modal-backdrop {
