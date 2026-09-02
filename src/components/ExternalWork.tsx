@@ -17,10 +17,6 @@ function blankField(taken: string[]): FormField {
   return { key: fieldKey('field', taken), label: '', type: 'text' }
 }
 
-function blankGroup(taken: string[]): FormField {
-  return { key: fieldKey('section', taken), label: '', type: 'group', fields: [blankField([])] }
-}
-
 /**
  * External work, kept against forms the office designs itself.
  *
@@ -165,13 +161,7 @@ export function ExternalWork() {
     const options = (field.options ?? []).map((o) => o.trim()).filter(Boolean)
     // The kind of box follows from the name, so nobody has to pick one.
     const type = inferType(label, options.length > 0)
-    return {
-      key,
-      label,
-      type,
-      ...(type === 'choice' ? { options } : {}),
-      ...(field.required ? { required: true } : {}),
-    }
+    return { key, label, type, ...(type === 'choice' ? { options } : {}) }
   }
 
   async function saveForm() {
@@ -311,88 +301,63 @@ export function ExternalWork() {
 
         <p className="muted">
           Name the fields this form needs; the kind of box each one gets follows from its name.
-          Give a field choices and it becomes a dropdown. A repeating section is a small set of
-          fields described once and filled in as many times as a job needs — one per appliance,
-          say.
+          Give a field choices and it becomes a dropdown. Tick Repeats and it becomes a section
+          with its own fields, described once and filled in as many times as a job needs — one
+          per appliance, say.
         </p>
 
         <ul className="field-builder">
-          {draft.map((field, index) =>
-            field.type === 'group' ? (
-              <li key={field.key} className="field-group">
-                <div className="field-builder-row">
-                  <label>
-                    Repeating section
-                    <input
-                      value={field.label}
-                      onChange={(event) => patchField(index, { label: event.target.value })}
-                      placeholder="e.g. Appliance"
-                    />
-                  </label>
-                  <span className="field-kind">Repeats</span>
-                  <div className="field-builder-actions">
+          {draft.map((field, index) => (
+            <li key={field.key} className={field.type === 'group' ? 'field-group' : undefined}>
+              <FieldRow
+                field={field}
+                first={index === 0}
+                last={index === draft.length - 1}
+                onPatch={(patch) => patchField(index, patch)}
+                onMove={(by) => moveField(index, by)}
+                onRemove={() => removeField(index)}
+                onToggleRepeat={(on) =>
+                  patchField(
+                    index,
+                    on
+                      ? {
+                          type: 'group',
+                          fields: (field.fields ?? []).length > 0 ? field.fields : [blankField([])],
+                        }
+                      : { type: 'text' },
+                  )
+                }
+              />
+              {field.type === 'group' && (
+                <>
+                  <ul className="field-builder">
+                    {(field.fields ?? []).map((sub, subIndex) => (
+                      <li key={sub.key}>
+                        <FieldRow
+                          field={sub}
+                          nested
+                          first={subIndex === 0}
+                          last={subIndex === (field.fields ?? []).length - 1}
+                          onPatch={(patch) => patchField(subIndex, patch, index)}
+                          onMove={(by) => moveField(subIndex, by, index)}
+                          onRemove={() => removeField(subIndex, index)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="row">
                     <button
                       type="button"
-                      className="text-button"
-                      disabled={index === 0}
-                      onClick={() => moveField(index, -1)}
+                      className="button ghost"
+                      onClick={() => addFieldInside(index)}
                     >
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      className="text-button"
-                      disabled={index === draft.length - 1}
-                      onClick={() => moveField(index, 1)}
-                    >
-                      Down
-                    </button>
-                    <button
-                      type="button"
-                      className="text-button danger"
-                      onClick={() => removeField(index)}
-                    >
-                      Remove
+                      Add field to {field.label.trim() || 'this section'}
                     </button>
                   </div>
-                </div>
-                <ul className="field-builder">
-                  {(field.fields ?? []).map((sub, subIndex) => (
-                    <li key={sub.key}>
-                      <FieldRow
-                        field={sub}
-                        first={subIndex === 0}
-                        last={subIndex === (field.fields ?? []).length - 1}
-                        onPatch={(patch) => patchField(subIndex, patch, index)}
-                        onMove={(by) => moveField(subIndex, by, index)}
-                        onRemove={() => removeField(subIndex, index)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-                <div className="row">
-                  <button
-                    type="button"
-                    className="button ghost"
-                    onClick={() => addFieldInside(index)}
-                  >
-                    Add field to {field.label.trim() || 'this section'}
-                  </button>
-                </div>
-              </li>
-            ) : (
-              <li key={field.key}>
-                <FieldRow
-                  field={field}
-                  first={index === 0}
-                  last={index === draft.length - 1}
-                  onPatch={(patch) => patchField(index, patch)}
-                  onMove={(by) => moveField(index, by)}
-                  onRemove={() => removeField(index)}
-                />
-              </li>
-            ),
-          )}
+                </>
+              )}
+            </li>
+          ))}
         </ul>
 
         <div className="row">
@@ -402,13 +367,6 @@ export function ExternalWork() {
             onClick={() => setDraft((current) => [...current, blankField(current.map((f) => f.key))])}
           >
             Add field
-          </button>
-          <button
-            type="button"
-            className="button ghost"
-            onClick={() => setDraft((current) => [...current, blankGroup(current.map((f) => f.key))])}
-          >
-            Add repeating section
           </button>
           <button type="button" className="button" disabled={saving} onClick={() => void saveForm()}>
             {saving ? 'Saving…' : 'Save form'}
@@ -606,52 +564,71 @@ export function ExternalWork() {
   )
 }
 
-/** One row of the designer: a field's name, its choices and what it was read as. */
+/**
+ * One row of the designer: a field's name, its choices, and whether it repeats.
+ * Ticking "Repeats" turns the field into a section with its own fields inside;
+ * a field already inside one cannot, because sections do not nest.
+ */
 function FieldRow({
   field,
   first,
   last,
+  nested,
   onPatch,
   onMove,
   onRemove,
+  onToggleRepeat,
 }: {
   field: FormField
   first: boolean
   last: boolean
+  nested?: boolean
   onPatch: (patch: Partial<FormField>) => void
   onMove: (by: number) => void
   onRemove: () => void
+  onToggleRepeat?: (on: boolean) => void
 }) {
+  const repeats = field.type === 'group'
   return (
     <div className="field-builder-row">
       <label>
-        Field name
+        {repeats ? 'Section name' : 'Field name'}
         <input
           value={field.label}
           onChange={(event) => onPatch({ label: event.target.value })}
-          placeholder="e.g. Serial number"
+          placeholder={repeats ? 'e.g. Appliance' : 'e.g. Serial number'}
         />
       </label>
-      <label>
-        Choices, separated by commas
-        <input
-          value={(field.options ?? []).join(', ')}
-          onChange={(event) => onPatch({ options: event.target.value.split(',') })}
-          placeholder="leave blank for a free box"
-        />
-      </label>
-      <label className="toolbar-toggle">
-        <input
-          type="checkbox"
-          checked={Boolean(field.required)}
-          onChange={(event) => onPatch({ required: event.target.checked })}
-        />
-        Required
-      </label>
+      {repeats ? (
+        <span className="field-note">filled in once per {field.label.trim() || 'entry'}</span>
+      ) : (
+        <label>
+          Choices, separated by commas
+          <input
+            value={(field.options ?? []).join(', ')}
+            onChange={(event) => onPatch({ options: event.target.value.split(',') })}
+            placeholder="leave blank for a free box"
+          />
+        </label>
+      )}
+      {nested ? (
+        <span />
+      ) : (
+        <label className="toolbar-toggle">
+          <input
+            type="checkbox"
+            checked={repeats}
+            onChange={(event) => onToggleRepeat?.(event.target.checked)}
+          />
+          Repeats
+        </label>
+      )}
       <span className="field-kind">
-        {field.label.trim()
-          ? typeLabel(inferType(field.label, (field.options ?? []).some((o) => o.trim())))
-          : ''}
+        {repeats
+          ? 'Section'
+          : field.label.trim()
+            ? typeLabel(inferType(field.label, (field.options ?? []).some((o) => o.trim())))
+            : ''}
       </span>
       <div className="field-builder-actions">
         <button type="button" className="text-button" disabled={first} onClick={() => onMove(-1)}>
@@ -739,18 +716,13 @@ function FieldInput({
         rows={2}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        required={field.required}
       />
     )
   }
   if (field.type === 'choice' || field.type === 'yesno') {
     const options = field.type === 'yesno' ? ['Yes', 'No'] : (field.options ?? [])
     return (
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        required={field.required}
-      >
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
         <option value="">Not set</option>
         {options.map((option) => (
           <option key={option} value={option}>
@@ -766,7 +738,6 @@ function FieldInput({
       step={field.type === 'number' ? 'any' : undefined}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      required={field.required}
     />
   )
 }

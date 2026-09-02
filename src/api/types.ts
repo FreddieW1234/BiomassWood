@@ -270,7 +270,6 @@ export type FormField = {
   type: FormFieldType
   /** Only for 'choice'. */
   options?: string[]
-  required?: boolean
   /** Only for 'group': the fields that repeat. Groups do not nest. */
   fields?: FormField[]
 }

@@ -1077,6 +1077,13 @@ textarea {
 
 /* What the field name was read as -- shown rather than chosen, so the guess is
    never a surprise. */
+/* Sits where the choices box would be on a repeating section. */
+.field-note {
+  padding-bottom: 0.62rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
 .field-kind {
   padding-bottom: 0.62rem;
   font-size: 0.72rem;
@@ -1108,7 +1115,8 @@ textarea {
     gap: 0.5rem;
   }
 
-  .field-kind {
+  .field-kind,
+  .field-note {
     padding-bottom: 0;
   }
 
