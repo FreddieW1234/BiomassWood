@@ -1,16 +1,42 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { cleaningApi, earningsApi, getAlerts, maintenanceApi, meterReadingsApi } from '../api/client'
-import type { AlertItem, CleaningEntry, EarningEntry, MaintenanceEntry, MeterReading } from '../api/types'
+import {
+  cleaningApi,
+  earningsApi,
+  getAlerts,
+  getCleaningDue,
+  getCleaningMissed,
+  maintenanceApi,
+  meterReadingsApi,
+} from '../api/client'
+import type {
+  AlertItem,
+  CleaningDueItem,
+  CleaningEntry,
+  EarningEntry,
+  MaintenanceEntry,
+  MeterReading,
+  MissedResponse,
+} from '../api/types'
+import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { boilerLabel, figure, money, showDate, today } from '../lib/format'
 import { ALERT_LINKS } from '../lib/options'
 
 type DueItem = {
-  kind: 'Cleaning' | 'Maintenance'
+  /** The check itself -- "C1" and the like -- or "Maintenance". */
+  kind: string
   link: string
   boiler: string
   due: string
+}
+
+/** How far back the dashboard glances for gaps; the full report lives on the
+ *  Cleaning page, where the range can be changed. */
+const MISSED_DAYS = 30
+
+function daysAgo(days: number) {
+  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
 }
 
 type ActivityItem = {
@@ -23,11 +49,14 @@ type ActivityItem = {
 
 export function Dashboard() {
   const { visible: boilers, byId } = useBoilers()
+  const { isAdmin } = useAuth()
   const [cleaning, setCleaning] = useState<CleaningEntry[]>([])
   const [maintenance, setMaintenance] = useState<MaintenanceEntry[]>([])
   const [readings, setReadings] = useState<MeterReading[]>([])
   const [earnings, setEarnings] = useState<EarningEntry[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
+  const [dueNow, setDueNow] = useState<CleaningDueItem[]>([])
+  const [missed, setMissed] = useState<MissedResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -41,14 +70,19 @@ export function Dashboard() {
       meterReadingsApi.list({ limit: 200 }),
       earningsApi.list({ limit: 200 }),
       getAlerts().catch(() => ({ data: { items: [] as AlertItem[] } })),
+      // Which check each boiler owes, worked out on the server. Reading it off
+      // whichever cleaning row happened to come back first could not say which
+      // of C1-C7 was meant.
+      getCleaningDue(today()).catch(() => ({ data: { items: [] as CleaningDueItem[] } })),
     ])
-      .then(([c, m, r, e, a]) => {
+      .then(([c, m, r, e, a, d]) => {
         if (cancelled) return
         setCleaning(c.data.items)
         setMaintenance(m.data.items)
         setReadings(r.data.items)
         setEarnings(e.data.items)
         setAlerts(a.data.items)
+        setDueNow(d.data.items)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load data')
@@ -61,29 +95,56 @@ export function Dashboard() {
     }
   }, [])
 
+  // Separate from the rest: staff are not shown this, and it is the one call
+  // that walks history rather than reading the top of a table.
+  useEffect(() => {
+    if (!isAdmin) return
+    let cancelled = false
+    getCleaningMissed(daysAgo(MISSED_DAYS), today())
+      .then((result) => {
+        if (!cancelled) setMissed(result.data)
+      })
+      .catch(() => {
+        // The dashboard is still useful without it; the Cleaning page reports
+        // the failure properly.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isAdmin])
+
   const dueItems = useMemo(() => {
     const items: DueItem[] = []
-    const collect = (entries: (CleaningEntry | MaintenanceEntry)[], kind: DueItem['kind'], link: string) => {
-      // Only the most recent next_due per boiler (and one for non-boiler work).
-      const seen = new Set<string>()
-      for (const entry of entries) {
-        const key = String(entry.boiler_id ?? 'general')
-        if (seen.has(key)) continue
-        seen.add(key)
-        if (!entry.next_due) continue
-        items.push({
-          kind,
-          link,
-          boiler:
-            entry.boiler_id === null ? 'General' : boilerLabel(byId.get(entry.boiler_id)),
-          due: entry.next_due,
-        })
-      }
+
+    // Cleaning comes from the server, which knows the interval of every check
+    // and so can name the one that is owed.
+    for (const item of dueNow) {
+      items.push({
+        kind: item.form_code,
+        link: '/cleaning',
+        boiler: boilerLabel(byId.get(item.boiler_id)),
+        due: item.next_due || today(),
+      })
     }
-    collect(cleaning, 'Cleaning', '/cleaning')
-    collect(maintenance, 'Maintenance', '/maintenance')
+
+    // Maintenance has no per-kind schedule, so the newest next_due per boiler
+    // is still the best available answer.
+    const seen = new Set<string>()
+    for (const entry of maintenance as MaintenanceEntry[]) {
+      const key = String(entry.boiler_id ?? 'general')
+      if (seen.has(key)) continue
+      seen.add(key)
+      if (!entry.next_due) continue
+      items.push({
+        kind: 'Maintenance',
+        link: '/maintenance',
+        boiler: entry.boiler_id === null ? 'General' : boilerLabel(byId.get(entry.boiler_id)),
+        due: entry.next_due,
+      })
+    }
+
     return items.sort((a, b) => (a.due < b.due ? -1 : 1))
-  }, [cleaning, maintenance, byId])
+  }, [dueNow, maintenance, byId])
 
   const overdueCount = useMemo(
     () => dueItems.filter((item) => item.due < today()).length,
@@ -181,18 +242,67 @@ export function Dashboard() {
         </section>
       )}
 
+      {/* What was owed and never recorded, which "checks due" cannot show: once
+          a day has passed, nothing is due for it any more. Admin only. */}
+      {isAdmin && missed && (
+        <section className="card">
+          <div className="card-head">
+            <h2>Missed checks</h2>
+            <div className="head-actions">
+              <span className="muted">last {MISSED_DAYS} days</span>
+              <Link to="/cleaning" className="text-button">
+                Full report
+              </Link>
+            </div>
+          </div>
+          {missed.total === 0 ? (
+            <p className="muted">
+              Nothing missed since {showDate(missed.from)}. Every check has a record against it.
+            </p>
+          ) : (
+            <>
+              <p className="missed-summary">
+                <strong className="bad">{missed.total}</strong> check
+                {missed.total === 1 ? '' : 's'} never recorded across {missed.boilers} boiler
+                {missed.boilers === 1 ? '' : 's'} since {showDate(missed.from)}.
+              </p>
+              <ul className="due-list">
+                {missed.items
+                  .filter((item) => item.missed > 0)
+                  .slice(0, 6)
+                  .map((item) => (
+                    <li key={`${item.boiler_id}-${item.form_code}`}>
+                      <Link to="/cleaning" className="due-kind">
+                        {item.form_code}
+                      </Link>
+                      <span className="due-boiler">
+                        No. {item.number} &middot; {item.missed} missed
+                      </span>
+                      <span className="due-date overdue-text">
+                        {item.first_missed === item.last_missed
+                          ? showDate(item.first_missed)
+                          : `${showDate(item.first_missed)} – ${showDate(item.last_missed)}`}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
+
       <div className="split even">
         <section className="card">
           <div className="card-head">
-            <h2>Upcoming checks</h2>
+            {/* Overdue work sorts to the top of this list, so calling the whole
+                card "upcoming" put a past date under a future heading. */}
+            <h2>Checks due</h2>
+            {overdueCount > 0 && <span className="count">{overdueCount} overdue</span>}
           </div>
           {loading ? (
             <p className="muted">Loading…</p>
           ) : dueItems.length === 0 ? (
-            <p className="muted">
-              Nothing scheduled. Set "next check due" on cleaning or maintenance entries and they'll
-              appear here.
-            </p>
+            <p className="muted">Nothing due. Every check is inside its interval.</p>
           ) : (
             <ul className="due-list">
               {dueItems.slice(0, 8).map((item, index) => (
