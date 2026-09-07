@@ -2274,3 +2274,11 @@ textarea {
     text-align: left;
   }
 }
+
+/* A line under a card heading saying what the number in it actually counts. */
+.card-note {
+  margin: -0.3rem 0 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}

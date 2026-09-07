@@ -255,6 +255,11 @@ export function Dashboard() {
               </Link>
             </div>
           </div>
+          <p className="card-note">
+            Windows that closed with nothing recorded. Once a day has passed nothing is due for
+            it any more, so these never reach the list above &mdash; the two counts overlap but
+            neither contains the other.
+          </p>
           {missed.total === 0 ? (
             <p className="muted">
               Nothing missed since {showDate(missed.from)}. Every check has a record against it.
@@ -299,6 +304,9 @@ export function Dashboard() {
             <h2>Checks due</h2>
             {overdueCount > 0 && <span className="count">{overdueCount} overdue</span>}
           </div>
+          <p className="card-note">
+            Owed as of today. A check stays here until it is done, however late that is.
+          </p>
           {loading ? (
             <p className="muted">Loading…</p>
           ) : dueItems.length === 0 ? (
