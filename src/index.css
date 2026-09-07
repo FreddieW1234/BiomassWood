@@ -2200,50 +2200,21 @@ textarea {
   cursor: pointer;
 }
 
-.missed-table .num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
 
-.missed-table .right {
-  text-align: right;
-}
 
-.missed-table tr.has-gap td {
-  background: var(--rust-soft);
-}
 
-.missed-detail td {
-  background: var(--paper);
-  padding: 0.6rem 0.8rem 0.75rem;
-}
 
-.missed-detail ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.missed-detail li {
-  font-size: 0.82rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 3px;
-  background: #fff;
-  box-shadow: inset 0 0 0 1px var(--card-line);
-}
 
-.missed-detail li.missed {
-  color: var(--rust);
-  box-shadow: inset 0 0 0 1px #e5b8ab;
-}
 
-.missed-detail li em {
-  color: var(--ink-soft);
-  font-style: normal;
-}
+
+
+
+
+
+
+
+
 
 @media (max-width: 720px) {
   /* Two dates side by side, the button under them, rather than a squeezed row */
@@ -2263,16 +2234,6 @@ textarea {
     margin: 0.5rem 0 0;
   }
 
-  /* The detail list is the one place the stacked layout should not add a
-     label, since each entry is already a date. */
-  .missed-detail td::before {
-    content: none;
-  }
-
-  .missed-detail td {
-    display: block;
-    text-align: left;
-  }
 }
 
 /* A line under a card heading saying what the number in it actually counts. */
@@ -2281,4 +2242,74 @@ textarea {
   font-size: 0.82rem;
   line-height: 1.45;
   color: var(--ink-soft);
+}
+
+/* ---------- checks not done, by day ---------- */
+
+.missed-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.missed-days > li {
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--card-line);
+}
+
+.missed-day {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-bottom: 0.35rem;
+}
+
+.missed-day strong {
+  font-size: 0.95rem;
+}
+
+.missed-day .muted {
+  font-size: 0.8rem;
+}
+
+.missed-entries {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Each entry is one chip: the check, the boiler, and whether it is still owed. */
+.missed-entries li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  background: var(--rust-soft);
+  box-shadow: inset 0 0 0 1px #e5b8ab;
+}
+
+.missed-entries li b {
+  color: var(--rust);
+  font-weight: 700;
+}
+
+.missed-entries li em {
+  color: var(--ink-soft);
+  font-style: normal;
+  font-size: 0.78rem;
+}
+
+.missed-entries .badge.overdue {
+  margin-left: 0.15rem;
+}
+
+@media (max-width: 720px) {
+  .missed-entries li {
+    flex: 1 1 100%;
+  }
 }

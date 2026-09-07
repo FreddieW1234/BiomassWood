@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getCleaningMissed } from '../api/client'
-import type { MissedItem, MissedResponse } from '../api/types'
+import type { MissedResponse } from '../api/types'
 import { showDate } from '../lib/format'
 
 /** Handy spans to look back over, rather than typing two dates every time. */
@@ -18,26 +18,38 @@ function daysAgo(days: number) {
   return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
 }
 
-/** Windows are a single day for C1 and a span for everything else. */
-function spanOf(from: string, to: string) {
-  return from === to ? showDate(from) : `${showDate(from)} – ${showDate(to)}`
+function weekday(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long' })
 }
 
+/** One check that should have been done by a given day, and was not. */
+type Entry = {
+  number: string
+  formCode: string
+  /** Set when the check covers a span rather than a single day. */
+  span: string
+  /** True when nothing has been recorded since, so it is still owed today. */
+  outstanding: boolean
+}
+
+type Day = { date: string; entries: Entry[] }
+
 /**
- * Which checks were owed and never recorded.
+ * The days a check did not get done.
  *
- * The day's round says what is outstanding now. This is the other direction:
- * over a period, which boiler was owed which check and has no record of it.
- * Checks that were merely done late are counted apart from those never done at
- * all, so a monthly check that slipped by a day does not hide a real gap.
+ * Organised by date rather than by boiler, because the question this answers is
+ * "what was not done, and when" -- and a date is how anyone thinks about a
+ * round that was skipped.
+ *
+ * A check done after its deadline is left out unless asked for. It happened,
+ * just late, and mixing those in would bury the days nobody turned up.
  */
 export function MissedChecks() {
-  const [from, setFrom] = useState(daysAgo(90))
+  const [from, setFrom] = useState(daysAgo(30))
   const [to, setTo] = useState(today())
   const [data, setData] = useState<MissedResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [open, setOpen] = useState<string>('')
   const [showLate, setShowLate] = useState(false)
 
   const load = useCallback(async () => {
@@ -57,20 +69,49 @@ export function MissedChecks() {
     void load()
   }, [load])
 
-  const rows = useMemo(() => {
+  const days = useMemo<Day[]>(() => {
     if (!data) return []
-    return showLate ? data.items : data.items.filter((item) => item.missed > 0)
+    const byDate = new Map<string, Entry[]>()
+
+    for (const item of data.items) {
+      for (const window of item.windows) {
+        if (window.status === 'late' && !showLate) continue
+        // Filed under the day it should have been done by. For the daily check
+        // that is the day itself; for the rest it is the end of the interval.
+        let list = byDate.get(window.to)
+        if (!list) byDate.set(window.to, (list = []))
+        list.push({
+          number: item.number,
+          formCode: item.form_code,
+          span: window.from === window.to ? '' : `${showDate(window.from)} – ${showDate(window.to)}`,
+          // Nothing recorded since the deadline means it is still owed today,
+          // which is exactly what also puts it in the outstanding list.
+          outstanding: !item.last_done || item.last_done < window.to,
+        })
+      }
+    }
+
+    return [...byDate.entries()]
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([date, entries]) => ({
+        date,
+        entries: entries.sort(
+          (a, b) => a.formCode.localeCompare(b.formCode) || Number(a.number) - Number(b.number),
+        ),
+      }))
   }, [data, showLate])
 
-  function pick(days: number) {
-    setFrom(daysAgo(days))
+  const total = useMemo(() => days.reduce((sum, day) => sum + day.entries.length, 0), [days])
+
+  function pick(range: number) {
+    setFrom(daysAgo(range))
     setTo(today())
   }
 
   return (
     <section className="card">
       <div className="card-head">
-        <h2>Missed checks</h2>
+        <h2>Checks not done</h2>
         <div className="head-actions">
           {RANGES.map((range) => (
             <button key={range.days} type="button" className="text-button" onClick={() => pick(range.days)}>
@@ -79,6 +120,12 @@ export function MissedChecks() {
           ))}
         </div>
       </div>
+
+      <p className="card-note">
+        Every day a check should have happened and no record was made. Weekends and bank holidays
+        are not counted for the daily check. A check covering a period is listed under the day it
+        should have been done by.
+      </p>
 
       <div className="missed-range">
         <label>
@@ -99,139 +146,50 @@ export function MissedChecks() {
       {data && !error && (
         <>
           <p className="missed-summary">
-            {data.total === 0 ? (
-              <strong className="ok">Nothing missed between {showDate(data.from)} and {showDate(data.to)}.</strong>
+            {total === 0 ? (
+              <strong className="ok">
+                Nothing was missed between {showDate(data.from)} and {showDate(data.to)}.
+              </strong>
             ) : (
               <>
-                <strong className="bad">{data.total}</strong> check{data.total === 1 ? '' : 's'} never
-                recorded, across {data.boilers} boiler{data.boilers === 1 ? '' : 's'}, between{' '}
-                {showDate(data.from)} and {showDate(data.to)}.
+                <strong className="bad">{total}</strong> check{total === 1 ? '' : 's'} not done, on{' '}
+                {days.length} day{days.length === 1 ? '' : 's'}.
               </>
             )}
             {data.late > 0 && (
-              <>
-                {' '}
-                <label className="missed-toggle">
-                  <input
-                    type="checkbox"
-                    checked={showLate}
-                    onChange={(e) => setShowLate(e.target.checked)}
-                  />
-                  also show {data.late} done late
-                </label>
-              </>
+              <label className="missed-toggle">
+                <input
+                  type="checkbox"
+                  checked={showLate}
+                  onChange={(e) => setShowLate(e.target.checked)}
+                />
+                also show {data.late} done after the deadline
+              </label>
             )}
           </p>
 
-          {rows.length > 0 && (
-            <div className="table-wrap">
-              <table className="ledger missed-table">
-                <thead>
-                  <tr>
-                    <th>Boiler</th>
-                    <th>Check</th>
-                    <th className="num">Missed</th>
-                    {showLate && <th className="num">Late</th>}
-                    <th>When</th>
-                    <th>Last done</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((item) => {
-                    const key = `${item.boiler_id}|${item.form_code}`
-                    const expanded = open === key
-                    return (
-                      <MissedRow
-                        key={key}
-                        item={item}
-                        expanded={expanded}
-                        showLate={showLate}
-                        onToggle={() => setOpen(expanded ? '' : key)}
-                      />
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ul className="missed-days">
+            {days.map((day) => (
+              <li key={day.date}>
+                <div className="missed-day">
+                  <strong>{showDate(day.date)}</strong>
+                  <span className="muted">{weekday(day.date)}</span>
+                </div>
+                <ul className="missed-entries">
+                  {day.entries.map((entry, index) => (
+                    <li key={`${entry.number}-${entry.formCode}-${index}`}>
+                      <b>{entry.formCode}</b>
+                      <span>No. {entry.number}</span>
+                      {entry.span && <em>covering {entry.span}</em>}
+                      {entry.outstanding && <span className="badge overdue">still not done</span>}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
         </>
       )}
     </section>
-  )
-}
-
-function MissedRow({
-  item,
-  expanded,
-  showLate,
-  onToggle,
-}: {
-  item: MissedItem
-  expanded: boolean
-  showLate: boolean
-  onToggle: () => void
-}) {
-  const windows = showLate ? item.windows : item.windows.filter((w) => w.status === 'missed')
-  const span =
-    item.missed === 0
-      ? '—'
-      : item.first_missed === item.last_missed
-        ? showDate(item.first_missed)
-        : `${showDate(item.first_missed)} – ${showDate(item.last_missed)}`
-
-  return (
-    <>
-      {/* data-label drives the stacked card layout the tables fall back to on
-          a phone; without it every value loses the column it belonged to. */}
-      <tr className={item.missed > 0 ? 'has-gap' : ''}>
-        <td data-label="Boiler">No. {item.number}</td>
-        <td data-label="Check">
-          <strong>{item.form_code}</strong>
-        </td>
-        <td className="num" data-label="Missed">
-          {item.missed > 0 ? <span className="bad">{item.missed}</span> : '—'}
-        </td>
-        {showLate && (
-          <td className="num" data-label="Late">
-            {item.late || '—'}
-          </td>
-        )}
-        <td data-label="When">{span}</td>
-        <td data-label="Last done">
-          {item.last_done ? showDate(item.last_done) : <span className="muted">never</span>}
-        </td>
-        <td className="right">
-          <button type="button" className="text-button" onClick={onToggle}>
-            {expanded ? 'Hide' : `Show ${windows.length}`}
-          </button>
-        </td>
-      </tr>
-      {expanded && (
-        <tr className="missed-detail">
-          <td colSpan={showLate ? 7 : 6}>
-            <ul>
-              {windows.map((w) => (
-                <li key={`${w.from}|${w.to}`} className={w.status}>
-                  {spanOf(w.from, w.to)}
-                  {w.status === 'late' && (
-                    <em>
-                      {' '}
-                      done {showDate(w.covered_on)}, {w.days_late} day
-                      {w.days_late === 1 ? '' : 's'} late
-                    </em>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {item.truncated && (
-              <p className="muted">
-                Only the first {item.windows.length} are listed. Narrow the dates to see the rest.
-              </p>
-            )}
-          </td>
-        </tr>
-      )}
-    </>
   )
 }

@@ -35,6 +35,15 @@ type DueItem = {
  *  Cleaning page, where the range can be changed. */
 const MISSED_DAYS = 30
 
+/** How far past its day a check now is, which reads better than a bare date. */
+function daysLate(due: string) {
+  return Math.max(1, Math.round((Date.now() - Date.parse(`${due}T00:00:00`)) / 86400000))
+}
+
+function weekday(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long' })
+}
+
 function daysAgo(days: number) {
   return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
 }
@@ -151,6 +160,28 @@ export function Dashboard() {
     [dueItems],
   )
 
+  // Grouped by the day each check should have been done by, which is the way
+  // the question gets asked: what did not get done, and when.
+  const missedDays = useMemo(() => {
+    const byDate = new Map<string, { number: string; formCode: string }[]>()
+    for (const item of missed?.items ?? []) {
+      for (const window of item.windows) {
+        if (window.status === 'late') continue
+        let list = byDate.get(window.to)
+        if (!list) byDate.set(window.to, (list = []))
+        list.push({ number: item.number, formCode: item.form_code })
+      }
+    }
+    return [...byDate.entries()]
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([date, entries]) => ({
+        date,
+        entries: entries.sort(
+          (a, b) => a.formCode.localeCompare(b.formCode) || Number(a.number) - Number(b.number),
+        ),
+      }))
+  }, [missed])
+
   const ytdEarnings = useMemo(() => {
     const year = today().slice(0, 4)
     return earnings.filter((e) => e.date.startsWith(year)).reduce((sum, e) => sum + e.amount, 0)
@@ -247,7 +278,7 @@ export function Dashboard() {
       {isAdmin && missed && (
         <section className="card">
           <div className="card-head">
-            <h2>Missed checks</h2>
+            <h2>Checks not done</h2>
             <div className="head-actions">
               <span className="muted">last {MISSED_DAYS} days</span>
               <Link to="/cleaning" className="text-button">
@@ -256,9 +287,8 @@ export function Dashboard() {
             </div>
           </div>
           <p className="card-note">
-            Windows that closed with nothing recorded. Once a day has passed nothing is due for
-            it any more, so these never reach the list above &mdash; the two counts overlap but
-            neither contains the other.
+            Days that went by with no record made. Some were caught up on afterwards, so these do
+            not all appear in the list above.
           </p>
           {missed.total === 0 ? (
             <p className="muted">
@@ -268,28 +298,26 @@ export function Dashboard() {
             <>
               <p className="missed-summary">
                 <strong className="bad">{missed.total}</strong> check
-                {missed.total === 1 ? '' : 's'} never recorded across {missed.boilers} boiler
-                {missed.boilers === 1 ? '' : 's'} since {showDate(missed.from)}.
+                {missed.total === 1 ? '' : 's'} not done, on {missedDays.length} day
+                {missedDays.length === 1 ? '' : 's'}, since {showDate(missed.from)}.
               </p>
-              <ul className="due-list">
-                {missed.items
-                  .filter((item) => item.missed > 0)
-                  .slice(0, 6)
-                  .map((item) => (
-                    <li key={`${item.boiler_id}-${item.form_code}`}>
-                      <Link to="/cleaning" className="due-kind">
-                        {item.form_code}
-                      </Link>
-                      <span className="due-boiler">
-                        No. {item.number} &middot; {item.missed} missed
-                      </span>
-                      <span className="due-date overdue-text">
-                        {item.first_missed === item.last_missed
-                          ? showDate(item.first_missed)
-                          : `${showDate(item.first_missed)} – ${showDate(item.last_missed)}`}
-                      </span>
-                    </li>
-                  ))}
+              <ul className="missed-days">
+                {missedDays.slice(0, 4).map((day) => (
+                  <li key={day.date}>
+                    <div className="missed-day">
+                      <strong>{showDate(day.date)}</strong>
+                      <span className="muted">{weekday(day.date)}</span>
+                    </div>
+                    <ul className="missed-entries">
+                      {day.entries.map((entry, index) => (
+                        <li key={index}>
+                          <b>{entry.formCode}</b>
+                          <span>No. {entry.number}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
               </ul>
             </>
           )}
@@ -301,11 +329,12 @@ export function Dashboard() {
           <div className="card-head">
             {/* Overdue work sorts to the top of this list, so calling the whole
                 card "upcoming" put a past date under a future heading. */}
-            <h2>Checks due</h2>
-            {overdueCount > 0 && <span className="count">{overdueCount} overdue</span>}
+            <h2>Still to do</h2>
+            {overdueCount > 0 && <span className="count">{overdueCount} late</span>}
           </div>
           <p className="card-note">
-            Owed as of today. A check stays here until it is done, however late that is.
+            Checks not done yet. The date is the day each one should have been done by, so a date
+            in the past means it is still outstanding.
           </p>
           {loading ? (
             <p className="muted">Loading…</p>
@@ -321,7 +350,9 @@ export function Dashboard() {
                   <span className="due-boiler">{item.boiler}</span>
                   <span className={`due-date${item.due < today() ? ' overdue-text' : ''}`}>
                     {showDate(item.due)}
-                    {item.due < today() && <span className="badge overdue">overdue</span>}
+                    {item.due < today() && (
+                      <span className="badge overdue">{daysLate(item.due)} days late</span>
+                    )}
                   </span>
                 </li>
               ))}
