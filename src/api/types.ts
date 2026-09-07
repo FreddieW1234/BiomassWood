@@ -252,6 +252,48 @@ export type CleaningDueResponse = {
   items: CleaningDueItem[]
 }
 
+/**
+ * One stretch a check was owed for. `from` and `to` are the same day for C1,
+ * which is daily; for the rest they are the two ends of one interval.
+ */
+export type MissedWindow = {
+  from: string
+  to: string
+  /** `late` means the check turned up, just after its window had closed. */
+  status: 'missed' | 'late'
+  covered_on: string
+  days_late: number
+}
+
+/** Every window of one check on one boiler that went unrecorded. */
+export type MissedItem = {
+  boiler_id: number
+  number: string
+  type: string
+  location: string
+  form_code: string
+  interval_days: number
+  missed: number
+  late: number
+  first_missed: string
+  last_missed: string
+  last_done: string
+  windows: MissedWindow[]
+  /** Set when there were more windows than the API will return. */
+  truncated: boolean
+}
+
+export type MissedResponse = {
+  from: string
+  to: string
+  /** Windows with nothing recorded at all. */
+  total: number
+  /** Windows covered by a check that arrived after they closed. */
+  late: number
+  boilers: number
+  items: MissedItem[]
+}
+
 /** A field on the external-work form, as designed in the app. */
 export type FormFieldType =
   | 'text'

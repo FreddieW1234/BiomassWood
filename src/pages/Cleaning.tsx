@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { cleaningApi, getCleaningDue } from '../api/client'
 import type { CleaningDueItem, CleaningEntry } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
+import { MissedChecks } from '../components/MissedChecks'
 import { MonthPicker } from '../components/MonthPicker'
 import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
@@ -112,7 +113,7 @@ function addDays(days: number) {
 
 export function Cleaning() {
   const { boilers, byId } = useBoilers()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   // A day at a time by default: a whole month of checks is hundreds of rows to
   // scroll past, and what anyone standing at a boiler wants is today.
   const [scope, setScope] = useState<'day' | 'month'>('day')
@@ -158,6 +159,7 @@ export function Cleaning() {
   })
 
   const [formOpen, setFormOpen] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
   const [chosenCode, setChosenCode] = useState('')
   const [answers, setAnswers] = useState<CleaningAnswers>(emptyAnswers)
   const [viewing, setViewing] = useState<CleaningEntry | null>(null)
@@ -273,22 +275,36 @@ export function Cleaning() {
         />
       )}
 
+      {/* The round above covers the day's work with two taps. Opening a blank
+          form is the exception, so it stays folded away behind a button. */}
       {!formOpen && (
         <section className="card">
           <div className="card-head">
-            <h2>Start a check</h2>
+            <h2>Manual entry</h2>
+            <button
+              type="button"
+              className="button ghost"
+              aria-expanded={manualOpen}
+              onClick={() => setManualOpen((open) => !open)}
+            >
+              {manualOpen ? 'Hide' : 'Open'}
+            </button>
           </div>
-          <div className="form-picker">
-            {CLEANING_FORMS.map((item) => (
-              <button key={item.code} type="button" className="form-choice" onClick={() => start(item.code)}>
-                <strong>{item.code}</strong>
-                <span>{item.title}</span>
-                <em>{item.frequency}</em>
-              </button>
-            ))}
-          </div>
+          {manualOpen && (
+            <div className="form-picker">
+              {CLEANING_FORMS.map((item) => (
+                <button key={item.code} type="button" className="form-choice" onClick={() => start(item.code)}>
+                  <strong>{item.code}</strong>
+                  <span>{item.title}</span>
+                  <em>{item.frequency}</em>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
       )}
+
+      {!formOpen && isAdmin && <MissedChecks />}
 
       {formOpen && (
         <form className="card form-panel" onSubmit={(event) => void onSubmit(event)}>

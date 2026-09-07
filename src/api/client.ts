@@ -3,6 +3,7 @@ import type {
   AlertItem,
   Boiler,
   CleaningDueResponse,
+  MissedResponse,
   CleaningEntry,
   Container,
   Defect,
@@ -133,6 +134,12 @@ export function getAlerts() {
 /** The day's cleaning round: which boiler needs which check. */
 export function getCleaningDue(date: string) {
   return request<CleaningDueResponse>(`/api/cleaning-due?date=${encodeURIComponent(date)}`)
+}
+
+/** Looking back instead: which checks were owed over a period and never done. */
+export function getCleaningMissed(from: string, to: string) {
+  const query = new URLSearchParams({ from, to })
+  return request<MissedResponse>(`/api/cleaning-missed?${query}`)
 }
 
 export type ListQuery = Record<string, string | number | undefined>
