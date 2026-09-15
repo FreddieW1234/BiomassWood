@@ -7,6 +7,21 @@ import { figure } from '../lib/format'
 
 const QUARTERS = [1, 2, 3, 4]
 
+/** The quarter after the latest one recorded for a boiler (Year 13 Q4 → Year 14 Q1). */
+function nextQuarterFor(boilerId: number | null, rows: RhiUsage[]) {
+  const latest = rows
+    .filter((row) => row.boiler_id === boilerId)
+    .reduce<RhiUsage | null>(
+      (best, row) =>
+        !best || row.year_index * 4 + row.quarter > best.year_index * 4 + best.quarter ? row : best,
+      null,
+    )
+  if (!latest) return { year_index: '', quarter: '1' }
+  return latest.quarter >= 4
+    ? { year_index: String(latest.year_index + 1), quarter: '1' }
+    : { year_index: String(latest.year_index), quarter: String(latest.quarter + 1) }
+}
+
 export function RhiUsagePage() {
   const { boilers, byId } = useBoilers()
   const [boilerId, setBoilerId] = useState('')
@@ -27,8 +42,10 @@ export function RhiUsagePage() {
       const [usageResult, yearsResult] = await Promise.all([rhiUsageApi.list(), rhiYearsApi.list()])
       setUsage(usageResult.data.items)
       setYears(yearsResult.data.items)
+      return usageResult.data.items
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load RHI usage')
+      return null
     } finally {
       setLoading(false)
     }
@@ -65,6 +82,15 @@ export function RhiUsagePage() {
 
   const lifetime = useMemo(() => grid.reduce((sum, row) => sum + row.total, 0), [grid])
 
+  function prefillNextQuarter(forBoilerId: number | null, rows: RhiUsage[]) {
+    setForm({ ...nextQuarterFor(forBoilerId, rows), kwh: '', notes: '' })
+  }
+
+  function changeBoiler(value: string) {
+    setBoilerId(value)
+    prefillNextQuarter(Number(value) || null, usage)
+  }
+
   function pickCell(yearIndex: number, quarter: number, cell: RhiUsage | null) {
     setForm({
       year_index: String(yearIndex),
@@ -94,8 +120,8 @@ export function RhiUsagePage() {
       }
       if (existing) await rhiUsageApi.update(existing.id, payload)
       else await rhiUsageApi.create(payload)
-      setForm({ year_index: form.year_index, quarter: form.quarter, kwh: '', notes: '' })
-      await refresh()
+      const fresh = await refresh()
+      if (fresh) prefillNextQuarter(selectedId, fresh)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -138,10 +164,17 @@ export function RhiUsagePage() {
         <div className="head-actions">
           <label className="toolbar-toggle">
             Boiler
-            <BoilerSelect boilers={boilers} value={boilerId} onChange={setBoilerId} required />
+            <BoilerSelect boilers={boilers} value={boilerId} onChange={changeBoiler} required />
           </label>
           {selectedId && !formOpen && (
-            <button type="button" className="button" onClick={() => setFormOpen(true)}>
+            <button
+              type="button"
+              className="button"
+              onClick={() => {
+                prefillNextQuarter(selectedId, usage)
+                setFormOpen(true)
+              }}
+            >
               Add figures
             </button>
           )}
