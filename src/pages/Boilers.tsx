@@ -156,23 +156,34 @@ export function Boilers() {
         { name: 'flowmeter', label: 'Flowmeter', width: 'half' },
         { name: 'meter_changed_on', label: 'Meter changed', kind: 'date', width: 'half' },
         { name: 'opening_reading', label: 'Opening meter reading', kind: 'number' },
-        { name: 'sold_on', label: 'Sold / transferred', kind: 'date', width: 'half' },
-        { name: 'sold_to', label: 'Buyer / transfer ref', width: 'half' },
         { name: 'decommissioned_on', label: 'Decommissioned', kind: 'date', width: 'half' },
-        { name: 'sale_agent', label: 'Sale agent', width: 'half' },
-        { name: 'final_reading', label: 'Final meter reading', kind: 'number', width: 'half' },
-        { name: 'final_reading_on', label: 'Final reading date', kind: 'date', width: 'half' },
-        {
-          name: 'final_reading_submitted_on',
-          label: 'Final reading submitted',
-          kind: 'date',
-          width: 'half',
-        },
-        { name: 'ofgem_notified', label: 'Ofgem notified?', placeholder: 'Yes / No', width: 'half' },
-        { name: 'reaccredited', label: 'Re-accredited?', placeholder: 'Yes / No', width: 'half' },
-        { name: 'new_rhi_number', label: 'New RHI number (buyer)', width: 'half' },
         { name: 'notes', label: 'Notes', kind: 'textarea', rows: 3 },
       ]}
+      revealSection={{
+        title: 'Sale / transfer',
+        button: 'Sell boiler',
+        undoButton: 'Not selling',
+        // Open for any boiler already marked sold or carrying a sale date.
+        isOpen: (form) => form.status === 'SOLD_TRANSFERRED' || Boolean(form.sold_on),
+        onReveal: () => ({ status: 'SOLD_TRANSFERRED' }),
+        hint: 'Saving records the sale and sets the status to Sold / transferred.',
+        fields: [
+          { name: 'sold_on', label: 'Sold / transferred', kind: 'date', width: 'half' },
+          { name: 'sold_to', label: 'Buyer / transfer ref', width: 'half' },
+          { name: 'sale_agent', label: 'Sale agent', width: 'half' },
+          { name: 'new_rhi_number', label: 'New RHI number (buyer)', width: 'half' },
+          { name: 'final_reading', label: 'Final meter reading', kind: 'number', width: 'half' },
+          { name: 'final_reading_on', label: 'Final reading date', kind: 'date', width: 'half' },
+          {
+            name: 'final_reading_submitted_on',
+            label: 'Final reading submitted',
+            kind: 'date',
+            width: 'half',
+          },
+          { name: 'ofgem_notified', label: 'Ofgem notified?', placeholder: 'Yes / No', width: 'half' },
+          { name: 'reaccredited', label: 'Re-accredited?', placeholder: 'Yes / No', width: 'half' },
+        ],
+      }}
       columns={[
         {
           header: 'No.',

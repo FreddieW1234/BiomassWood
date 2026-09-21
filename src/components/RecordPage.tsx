@@ -19,6 +19,22 @@ export type RecordField = {
   step?: string
 }
 
+/**
+ * Fields kept off the form until they are needed -- the sale of a boiler, say.
+ * The section shows whenever `isOpen` holds for the form; when editing, a
+ * button applies `onReveal`'s changes (which should make `isOpen` true), and
+ * can be undone until the form is saved.
+ */
+export type RevealSection = {
+  title: string
+  button: string
+  undoButton: string
+  fields: RecordField[]
+  isOpen: (form: Record<string, string>) => boolean
+  onReveal: (form: Record<string, string>) => Record<string, string>
+  hint?: string
+}
+
 export type RecordColumn<T> = {
   header: string
   className?: string
@@ -54,6 +70,7 @@ type Props<T extends { id: number }> = {
    * accreditation date, say -- can still be exported.
    */
   exportName?: string
+  revealSection?: RevealSection
 }
 
 export function RecordPage<T extends { id: number }>({
@@ -73,27 +90,51 @@ export function RecordPage<T extends { id: number }>({
   toPayload,
   embedded,
   exportName,
+  revealSection,
 }: Props<T>) {
   const ledger = useLedger<T, Record<string, string>>({ api, empty, toForm, toPayload })
   const [formOpen, setFormOpen] = useState(false)
   const rows = transformItems ? transformItems(ledger.items) : ledger.items
   const editing = ledger.items.find((item) => item.id === ledger.editingId)
+  // Values the reveal button overwrote, so it can be undone before saving.
+  const [beforeReveal, setBeforeReveal] = useState<Record<string, string> | null>(null)
+  const sectionOpen = revealSection ? revealSection.isOpen(ledger.form) : false
+  const exportFields = revealSection ? [...fields, ...revealSection.fields] : fields
+
+  function reveal() {
+    if (!revealSection) return
+    const changes = revealSection.onReveal(ledger.form)
+    setBeforeReveal(Object.fromEntries(Object.keys(changes).map((key) => [key, ledger.form[key] ?? ''])))
+    for (const [key, value] of Object.entries(changes)) ledger.setField(key, value)
+  }
+
+  function undoReveal() {
+    if (!beforeReveal || !revealSection) return
+    for (const [key, value] of Object.entries(beforeReveal)) ledger.setField(key, value)
+    for (const field of revealSection.fields) {
+      if (!(field.name in beforeReveal)) ledger.setField(field.name, editing ? toForm(editing)[field.name] ?? '' : '')
+    }
+    setBeforeReveal(null)
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     const saved = await ledger.submit()
     if (!saved) return
     await onSaved?.(saved)
+    setBeforeReveal(null)
     setFormOpen(false)
   }
 
   function close() {
     ledger.cancel()
+    setBeforeReveal(null)
     setFormOpen(false)
   }
 
   function startEdit(item: T) {
     ledger.edit(item)
+    setBeforeReveal(null)
     setFormOpen(true)
   }
 
@@ -115,7 +156,7 @@ export function RecordPage<T extends { id: number }>({
             <ExportCsv
               name={exportName}
               rows={rows}
-              columns={fields.map((field) => ({ key: field.name, label: field.label }))}
+              columns={exportFields.map((field) => ({ key: field.name, label: field.label }))}
             />
           )}
           {!formOpen && (
@@ -144,6 +185,29 @@ export function RecordPage<T extends { id: number }>({
               />
             ))}
           </div>
+          {revealSection && sectionOpen && (
+            <div className="form-section">
+              <div className="form-section-head">
+                <h3>{revealSection.title}</h3>
+                {beforeReveal && (
+                  <button type="button" className="text-button" onClick={undoReveal}>
+                    {revealSection.undoButton}
+                  </button>
+                )}
+              </div>
+              <div className="form-grid">
+                {revealSection.fields.map((field) => (
+                  <Field
+                    key={field.name}
+                    field={field}
+                    value={ledger.form[field.name] ?? ''}
+                    onChange={(value) => ledger.setField(field.name, value)}
+                  />
+                ))}
+              </div>
+              {revealSection.hint && <p className="hint">{revealSection.hint}</p>}
+            </div>
+          )}
           {formExtras?.(editing ?? null)}
           <div className="row">
             <button type="submit" className="button" disabled={ledger.saving}>
@@ -152,6 +216,11 @@ export function RecordPage<T extends { id: number }>({
             <button type="button" className="button ghost" onClick={close}>
               Cancel
             </button>
+            {revealSection && editing && !sectionOpen && (
+              <button type="button" className="button ghost" onClick={reveal}>
+                {revealSection.button}
+              </button>
+            )}
           </div>
           {ledger.error && <p className="err">{ledger.error}</p>}
           {hint && <p className="hint">{hint}</p>}
