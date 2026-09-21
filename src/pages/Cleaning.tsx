@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { cleaningApi, getCleaningDue } from '../api/client'
-import type { CleaningDueItem, CleaningEntry } from '../api/types'
+import type { Boiler, CleaningDueItem, CleaningEntry } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
 import { MissedChecks } from '../components/MissedChecks'
 import { MonthPicker } from '../components/MonthPicker'
+import { RangeExport } from '../components/RangeExport'
 import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { useLedger } from '../hooks/useLedger'
+import { exportSource, loadRange } from '../lib/rangeExport'
 import { addDaysTo, boilerLabel, clockTime, nearestHour, showDate, today } from '../lib/format'
 import {
   CLEANING_FORMS,
@@ -105,6 +107,66 @@ function DuplicateWarning({
   )
 }
 
+/** Cleaning checks as spreadsheet rows: one row per check, answers summarised. */
+function cleaningExport(byId: Map<number, Boiler>) {
+  return exportSource<CleaningEntry>({
+    key: 'cleaning',
+    label: 'Cleaning checks',
+    fileName: 'cleaning',
+    load: (from, to) => loadRange(cleaningApi, from, to, (row) => row.date, true),
+    date: (row) => row.date,
+    boilerId: (row) => row.boiler_id,
+    columns: [
+      { label: 'Date', value: (row) => row.date },
+      { label: 'Time', value: (row) => row.time },
+      {
+        label: 'Boiler',
+        value: (row) => (row.boiler_id === null ? '' : byId.get(row.boiler_id)?.number ?? row.boiler_id),
+      },
+      { label: 'Form', value: (row) => row.form_code },
+      { label: 'Check', value: (row) => findForm(row.form_code || '')?.title ?? '' },
+      { label: 'Operator', value: (row) => row.staff },
+      {
+        label: 'Items ticked',
+        value: (row) => countAnswered(findForm(row.form_code || ''), parseAnswers(row.answers || '')),
+      },
+      { label: 'Items on form', value: (row) => countItems(findForm(row.form_code || '')) },
+      {
+        label: 'Defects',
+        value: (row) => defectItems(findForm(row.form_code || ''), parseAnswers(row.answers || '')).length,
+      },
+      {
+        label: 'Defect details',
+        value: (row) => {
+          const answers = parseAnswers(row.answers || '')
+          return defectItems(findForm(row.form_code || ''), answers)
+            .map((item) => {
+              const note = answers.items[String(item.no)]?.note
+              return `${item.no}. ${item.text}${note ? ` (${note})` : ''}`
+            })
+            .join('; ')
+        },
+      },
+      {
+        label: 'Record fields',
+        value: (row) => {
+          const definition = findForm(row.form_code || '')
+          const { extras } = parseAnswers(row.answers || '')
+          const labels: Record<string, string> = { ...RETIRED_EXTRA_LABELS }
+          for (const extra of definition?.extras ?? []) labels[extra.name] = extra.label
+          return Object.entries(extras)
+            .filter(([, value]) => value)
+            .map(([name, value]) => `${labels[name] ?? name}: ${value}`)
+            .join('; ')
+        },
+      },
+      { label: 'Notes', value: (row) => row.notes },
+      { label: 'Work done', value: (row) => row.work_done },
+      { label: 'Next due', value: (row) => row.next_due },
+    ],
+  })
+}
+
 function addDays(days: number) {
   const date = new Date()
   date.setDate(date.getDate() + days)
@@ -166,6 +228,7 @@ export function Cleaning() {
   const [duplicate, setDuplicate] = useState<CleaningEntry | null>(null)
 
   const form = findForm(chosenCode)
+  const exportSources = useMemo(() => [cleaningExport(byId)], [byId])
 
   function start(code: string) {
     const definition = findForm(code)
@@ -264,6 +327,9 @@ export function Cleaning() {
       <div className="page-head with-action">
         <div>
           <h1>Cleaning</h1>
+        </div>
+        <div className="head-actions">
+          <RangeExport boilers={boilers} sources={exportSources} />
         </div>
       </div>
 

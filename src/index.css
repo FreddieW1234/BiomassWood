@@ -2333,3 +2333,7 @@ textarea {
   margin: 0;
   font-size: 1rem;
 }
+
+.modal .view-switch {
+  margin-bottom: 0.85rem;
+}

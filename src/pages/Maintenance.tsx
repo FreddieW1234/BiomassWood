@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { annualServicesApi, maintenanceApi, maintenancePartsApi } from '../api/client'
-import type { AnnualService, MaintenanceEntry, MaintenancePart } from '../api/types'
+import type { AnnualService, Boiler, MaintenanceEntry, MaintenancePart } from '../api/types'
 import { BoilerSelect } from '../components/BoilerSelect'
 import { ExternalWork } from '../components/ExternalWork'
+import { RangeExport } from '../components/RangeExport'
 import { RecordPage } from '../components/RecordPage'
 import { useAuth } from '../context/AuthContext'
 import { useBoilers } from '../hooks/useBoilers'
 import { figure, money, showDate, today } from '../lib/format'
+import { exportSource, loadRange } from '../lib/rangeExport'
 import { WORK_TYPES, YES_NO, YES_NO_PENDING } from '../lib/options'
 
 type Tab = 'log' | 'parts' | 'service'
@@ -18,6 +20,84 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 type Section = 'routine' | 'external'
+
+/** The three routine record types, for the date-range export. */
+function routineExports(byId: Map<number, Boiler>) {
+  const boiler = (id: number | null) => (id === null ? '' : byId.get(id)?.number ?? id)
+  return [
+    exportSource<MaintenanceEntry>({
+      key: 'log',
+      label: 'Maintenance & repair log',
+      fileName: 'maintenance',
+      load: (from, to) => loadRange(maintenanceApi, from, to, (row) => row.date, true),
+      date: (row) => row.date,
+      boilerId: (row) => row.boiler_id,
+      columns: [
+        { label: 'Job no.', value: (row) => row.job_no },
+        { label: 'Date of work', value: (row) => row.date },
+        { label: 'Boiler', value: (row) => boiler(row.boiler_id) },
+        { label: 'Type of work', value: (row) => row.work_type },
+        { label: 'Fault / reason for work', value: (row) => row.fault },
+        { label: 'Work carried out', value: (row) => row.work_done },
+        { label: 'Parts fitted', value: (row) => row.parts },
+        { label: 'Carried out by', value: (row) => row.staff },
+        { label: 'Contractor / company', value: (row) => row.contractor },
+        { label: 'Back in service', value: (row) => row.back_in_service },
+        { label: 'Cost (GBP)', value: (row) => row.cost || '' },
+        { label: 'Invoice / receipt ref.', value: (row) => row.invoice_ref },
+        { label: 'Notifiable change?', value: (row) => row.notifiable },
+        { label: 'Reported to Ofgem', value: (row) => row.ofgem_reported_on },
+        { label: 'Record source', value: (row) => row.record_source },
+        { label: 'Photos', value: (row) => row.photos },
+        { label: 'Notes', value: (row) => row.notes },
+      ],
+    }),
+    exportSource<MaintenancePart>({
+      key: 'parts',
+      label: 'Parts & purchases',
+      fileName: 'maintenance-parts',
+      load: (from, to) => loadRange(maintenancePartsApi, from, to, (row) => row.purchase_date, false),
+      date: (row) => row.purchase_date,
+      boilerId: (row) => row.boiler_id,
+      columns: [
+        { label: 'Purchase date', value: (row) => row.purchase_date },
+        { label: 'Order no.', value: (row) => row.order_no },
+        { label: 'Boiler', value: (row) => boiler(row.boiler_id) },
+        { label: 'Part / consumable', value: (row) => row.part },
+        { label: 'Part number', value: (row) => row.part_number },
+        { label: 'Quantity', value: (row) => row.quantity || '' },
+        { label: 'Supplier', value: (row) => row.supplier },
+        { label: 'Unit cost (GBP)', value: (row) => row.unit_cost || '' },
+        { label: 'Total cost (GBP)', value: (row) => row.total_cost || '' },
+        { label: 'Invoice / receipt ref.', value: (row) => row.invoice_ref },
+        { label: 'Date fitted', value: (row) => row.fitted_on },
+        { label: 'Fitted by', value: (row) => row.fitted_by },
+        { label: 'Notes', value: (row) => row.notes },
+      ],
+    }),
+    exportSource<AnnualService>({
+      key: 'service',
+      label: 'Annual service',
+      fileName: 'annual-services',
+      load: (from, to) => loadRange(annualServicesApi, from, to, (row) => row.service_date, false),
+      date: (row) => row.service_date,
+      boilerId: (row) => row.boiler_id,
+      columns: [
+        { label: 'Year', value: (row) => row.year },
+        { label: 'Service date', value: (row) => row.service_date },
+        { label: 'Boiler', value: (row) => boiler(row.boiler_id) },
+        { label: 'Engineer name', value: (row) => row.engineer_name },
+        { label: 'Company', value: (row) => row.company },
+        { label: 'HETAS / HABMS reg. no.', value: (row) => row.registration_no },
+        { label: 'Certificate / PPM reference', value: (row) => row.certificate_ref },
+        { label: 'Maintenance standard met?', value: (row) => row.standard_met },
+        { label: 'Invoice ref.', value: (row) => row.invoice_ref },
+        { label: 'Next service due', value: (row) => row.next_service_due },
+        { label: 'Outstanding actions', value: (row) => row.outstanding_actions },
+      ],
+    }),
+  ]
+}
 
 export function Maintenance() {
   const { boilers, byId } = useBoilers()
@@ -31,6 +111,7 @@ export function Maintenance() {
 
   const selectedId = Number(boilerId) || null
   const boiler = selectedId ? byId.get(selectedId) : undefined
+  const exportSources = useMemo(() => routineExports(byId), [byId])
 
   return (
     <div className="page wide">
@@ -46,6 +127,7 @@ export function Maintenance() {
               Boiler
               <BoilerSelect boilers={boilers} value={boilerId} onChange={setBoilerId} required />
             </label>
+            <RangeExport boilers={boilers} sources={exportSources} />
           </div>
         )}
       </div>
