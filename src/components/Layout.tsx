@@ -64,7 +64,7 @@ export function Layout() {
           {isAdmin ? (
             <>
               <NavLink to="/" end>
-                Dashboard
+                Main Dashboard
               </NavLink>
               <p className="nav-label">Records</p>
               <NavLink to="/cleaning">Cleaning</NavLink>

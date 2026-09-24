@@ -223,7 +223,7 @@ export function Dashboard() {
   return (
     <div className="page">
       <div className="page-head">
-        <h1>Dashboard</h1>
+        <h1>Main Dashboard</h1>
       </div>
 
       {error && <p className="err">{error}</p>}
